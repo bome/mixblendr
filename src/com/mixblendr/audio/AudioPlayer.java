@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mixblendr.util.FatalExceptionListener;
-import com.mixblendr.gui.main.Main;
 
 /**
  * Main player class that owns all the other objects like Mixer, State,
@@ -25,26 +24,21 @@ public class AudioPlayer {
 	private AudioFileFactory factory;
 	private List<Listener> listeners;
 	private FatalExceptionListener fel;
-    //private Main fel;
 
-    private static List<AudioPlayer> instances = new ArrayList<AudioPlayer>();
-
-
-
-
-    /**
-	 * Create an instance of AudioPlayer and create the state object. You must
-	 * call init() to intialize the AudioOutput, AudioMixer, AudioFileFactory
-	 * classes.
-	 */
-	public AudioPlayer(Main fel) {
-		this(fel, null);
-        
-    }
+	private static List<AudioPlayer> instances = new ArrayList<AudioPlayer>();
 
 	/**
 	 * Create an instance of AudioPlayer and create the state object. You must
 	 * call init() to intialize the AudioOutput, AudioMixer, AudioFileFactory
+	 * classes.
+	 */
+	public AudioPlayer(FatalExceptionListener fel) {
+		this(fel, null);
+	}
+
+	/**
+	 * Create an instance of AudioPlayer and create the state object. You must
+	 * call init() to initialize the AudioOutput, AudioMixer, AudioFileFactory
 	 * classes.
 	 */
 	public AudioPlayer(FatalExceptionListener fel,
@@ -62,14 +56,11 @@ public class AudioPlayer {
 	 * classes.
 	 */
 	public void init() {
-
-        output = new AudioOutput(this, state);
-
-        mixer = new AudioMixer(state);
+		output = new AudioOutput(this, state);
+		mixer = new AudioMixer(state);
 		output.setInput(mixer);
 		output.setFatalExceptionListener(fel);
-
-    }
+	}
 
 	/**
 	 * @return the factory
@@ -126,7 +117,7 @@ public class AudioPlayer {
 			}
 			// reset calculation for interpolating the sample position
 			state.knownSampleSystemTime = -1;
-            output.start();
+			output.start();
 			audioSampleLag = output.getSampleLag();
 			for (Listener l : listeners) {
 				l.onPlaybackStart(this);
@@ -134,25 +125,17 @@ public class AudioPlayer {
 		}
 	}
 
-    
-
-//    public void setSaveToFile(boolean value)
-//    {
-//        if (output != null) {
-//            output.setPlaying(false);
-//        }
-//    }
-
-    /** pause playback */
+	/** pause playback */
 	public void stop(boolean immediate) {
 		if (isStarted()) {
-            //output.stop(immediate);
-            output.stop(true);
-            flushPeakCaches();
-            for (Listener l : listeners) {
-                l.onPlaybackStop(this, immediate);
-            }
-        }
+			// TODO: correct relaying of the "iommediate" flag
+			// output.stop(immediate);
+			output.stop(true);
+			flushPeakCaches();
+			for (Listener l : listeners) {
+				l.onPlaybackStop(this, immediate);
+			}
+		}
 	}
 
 	/**

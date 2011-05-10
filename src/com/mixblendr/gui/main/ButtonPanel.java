@@ -58,8 +58,8 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 	MToggle scissorTool;
 	MButton rewind;
 	MButton play;
-    MButton save;
-    MButton fastForward;
+	MButton save;
+	MButton fastForward;
 	MToggle loop;
 
 	MLabel position;
@@ -87,8 +87,8 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 		scissorTool = getToggle(builder, "scissor");
 		rewind = getButton(builder, "rewind");
 		play = getButton(builder, "play");
-        save = getButton(builder, "save");
-        fastForward = getButton(builder, "fastForward");
+		save = getButton(builder, "save");
+		fastForward = getButton(builder, "fastForward");
 		loop = getToggle(builder, "loop");
 
 		position = getLabel(builder, "transportDisplay");
@@ -249,8 +249,8 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 * @see
+	 * java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
 	public void actionPerformed(ActionEvent e) {
 		Object src = e.getSource();
@@ -272,9 +272,9 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 			onWindToMeasure(false);
 		} else if (src == play) {
 			onPlay();
-        } else if (src == save) {
-            onSave();
-        } else if (src == fastForward) {
+		} else if (src == save) {
+			onSave();
+		} else if (src == fastForward) {
 			onWindToMeasure(true);
 		} else if (src == loop) {
 			onLoop();
@@ -573,7 +573,6 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see com.mixblendr.audio.AudioPlayer.Listener#onPlaybackStart()
 	 */
 	public void onPlaybackStart(AudioPlayer player) {
@@ -590,7 +589,6 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see com.mixblendr.audio.AudioPlayer.Listener#onPlaybackStop(boolean)
 	 */
 	public void onPlaybackStop(AudioPlayer player, boolean immediate) {
@@ -612,14 +610,13 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 		getGlobals().togglePlayback();
 	}
 
-    /** action upon pressing the Start button */
-    public void onSave() {
-        // will trigger call onPlaybackStart or onPlaybackStop
-        getGlobals().startSaveFile();
-    }
+	/** action upon pressing the Save button */
+	public void onSave() {
+		// will trigger call onPlaybackStart or onPlaybackStop
+		getGlobals().startSaveFile();
+	}
 
-
-    /**
+	/**
 	 * action upon pressing the Stop button: stop playback and reset position.
 	 */
 	public void stopPlayback(boolean immediate) {
@@ -671,9 +668,7 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see com.mixblendr.audio.AudioPlayer.Listener#onPlaybackPositionChanged(com.mixblendr.audio.AudioPlayer,
-	 *      long)
+	 * @see com.mixblendr.audio.AudioPlayer.Listener#onPlaybackPositionChanged(com.mixblendr.audio.AudioPlayer, long)
 	 */
 	public void onPlaybackPositionChanged(AudioPlayer player, long samplePos) {
 		onDisplayTimer(false);
@@ -681,7 +676,6 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see com.mixblendr.audio.AudioState.StateListener#displayModeChanged()
 	 */
 	public void displayModeChanged() {
@@ -692,7 +686,6 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see com.mixblendr.audio.AudioState.StateListener#tempoChanged()
 	 */
 	public void tempoChanged() {
@@ -701,9 +694,7 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see com.mixblendr.audio.AudioState.StateListener#loopChanged(long, long,
-	 *      long, long)
+	 * @see com.mixblendr.audio.AudioState.StateListener#loopChanged(long, long, long, long)
 	 */
 	public void loopChanged(long oldStart, long oldEnd, long newStart,
 			long newEnd) {
@@ -725,7 +716,6 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
 	 */
 	public void mouseEntered(MouseEvent e) {
@@ -734,7 +724,6 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
 	 */
 	public void mouseExited(MouseEvent e) {
@@ -743,7 +732,6 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
 	 */
 	public void mousePressed(MouseEvent e) {
@@ -752,7 +740,6 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
 	 */
 	public void mouseReleased(MouseEvent e) {
@@ -784,57 +771,5 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 			tempo.repaint();
 		}
 	}
-
-
-    /** Only for test purpose
-     *
-     */
-    /*public void addTrack() {
-        // the inserted region
-        AudioRegion region = null;
-        long insertSample = handleDragOver(e.getLocation(), false);
-        if (insertSample >= 0) {
-                if (dragURL != null) {
-                    boolean insertLast = false;
-                    if (dragSampleCount == UNKNOWN_SAMPLE_COUNT) {
-                        // insert at last so that clicking a region that
-                        // overlaps is possible
-                        insertLast = true;
-                        if (DEBUG) {
-                            debug("Insert new region as first component");
-                        }
-                        if (!extractDragSampleCount(dragURL.getFile())) {
-                            // don't know the size
-                            dragSampleCount = -1;
-                        }
-                    }
-                    region = globals.addRegion(getTrack(), dragURL,
-                            insertSample, dragSampleCount);
-                    addRegion(region, insertLast ? getComponentCount() : -1);
-                    // set the track name to this region's name
-                    setTrackName(extractFilename(Utils.getBaseName(dragURL.getFile())));
-                } else {
-                    insertSample = -1;
-                    Debug.displayErrorDialog(this, "Drag'n'Drop error",
-                            "Cannot drop this link.");
-                }
-        }
-        if (insertSample >= 0) {
-            update();
-            if (region != null) {
-                RegionGraph rg = getRegionGraph(region);
-                if (rg != null) {
-                    rg.setSelected(true);
-                    rg.requestFocus();
-                }
-            }
-        }
-        e.dropComplete(insertSample >= 0);
-        clearDragVars();
-        if (globals != null) {
-            globals.setDraggingMouse(false);
-        }
-    }   */
-
 
 }

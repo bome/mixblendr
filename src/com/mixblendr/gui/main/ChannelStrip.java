@@ -158,9 +158,7 @@ class ChannelStrip implements MSlider.Listener, ActionListener, AudioListener {
 			parent.remove(regions);
 			// Main is responsible for adding the track panels to the parent
 		}
-
-
-    }
+	}
 
 	/**
 	 * Create a copy of the given TrackPanel and add it to its parent.

@@ -46,9 +46,8 @@ public class Globals implements ChangeListener {
 	private RegionSelectionManager selectionManager;
 
 	private JComponent masterPanel;
-    private Globals globals;
 
-    // if the user is currently doing something with the mouse
+	// if the user is currently doing something with the mouse
 	private boolean draggingMouse;
 
 	/** cache the all regions view port, set by Main */
@@ -56,27 +55,15 @@ public class Globals implements ChangeListener {
 	private int allRegionsScrollX;
 	private int allRegionsScrollWidth;
 
-    private boolean isPublishDone = false;
+	private boolean isPublishDone = false;
 
-    private String fileName;
+	private String fileName;
 
-    public String getFileName()
-    {
-        return fileName;
-    }
+	public String getFileName() {
+		return fileName;
+	}
 
-    public Globals getGlobals()
-    {
-        return globals;
-    }
-
-    public synchronized void setGlobals(Globals globals)
-    {
-        this.globals = globals;
-    }
-
-
-    /**
+	/**
 	 * a global key listener that all focusable controls (except text fields
 	 * that only receive temporary focus) should set
 	 */
@@ -301,9 +288,8 @@ public class Globals implements ChangeListener {
 	public void startPlayback() {
 		if (player == null) return;
 		try {
-            //player.getOutput().setPlaying(true);
-            player.start();
-        } catch (Throwable t) {
+			player.start();
+		} catch (Throwable t) {
 			Debug.displayErrorDialogAsync(allRegionsViewPort, t,
 					"when starting playback");
 		}
@@ -322,15 +308,13 @@ public class Globals implements ChangeListener {
 	 * a dialog with the error message.
 	 * 
 	 * @param immediate if true, stop will be done immediately (should only
-	 *            happen at exit of the program), otherwise fade it out gently.
+	 *        happen at exit of the program), otherwise fade it out gently.
 	 */
 	void stopPlayback(boolean immediate) {
 		if (player == null) return;
 		try {
 			player.stop(immediate);
-            //player.getOutput().setPlaying(false);
-
-        } catch (Throwable t) {
+		} catch (Throwable t) {
 			Debug.displayErrorDialogAsync(allRegionsViewPort, t,
 					"when stopping playback");
 		}
@@ -342,85 +326,79 @@ public class Globals implements ChangeListener {
 	 */
 	public void togglePlayback() {
 
-        if (player == null) return;
+		if (player == null) return;
 
-        if (isPublishDone) return;
-        
-        if (player.isStarted()) {
+		if (isPublishDone) return;
+
+		if (player.isStarted()) {
 			stopPlayback();
-        } else {
-            startPlayback();
+		} else {
+			startPlayback();
 		}
 	}
 
+	public void startSaveFile() {
+		if (isPublishDone) {
+			Debug.displayErrorDialogAsync(allRegionsViewPort, null,
+					"Publishing has been already done");
+		} else {
+			if (getPlayer().getOutput().isPlaying()) {
+				Debug.displayErrorDialogAsync(allRegionsViewPort, null,
+						"Can't publish a track during playing");
+				return;
+			}
 
-    public void startSaveFile()
-    {
-        if (isPublishDone) {
-            Debug.displayErrorDialogAsync(allRegionsViewPort, null, "Publishing has been already done");
-        }
-        else {
-            if (getPlayer().getOutput().IsPlaying()) {
-                Debug.displayErrorDialogAsync(allRegionsViewPort, null, "Can't publish a track during playing");
-                return;
-            }
+			if (player.getMixer().isEmpty()) {
+				Debug.displayErrorDialogAsync(allRegionsViewPort, null,
+						"Nothing to save");
+				return;
+			}
 
+			double minStartTime = player.getMixer().getStartTimeSeconds();
+			if (minStartTime > 60) {
+				Debug.displayErrorDialogAsync(
+						allRegionsViewPort,
+						null,
+						"Cannot find any audio for a period of 1 minute. To publish your track, please move it to the beginning of the timeline.");
+				return;
+			}
 
+			int dialogresult = JOptionPane.showConfirmDialog(
+					allRegionsViewPort,
+					"Are you sure you want to publish this track? You won't be able to make any further edits after you publish it.",
+					"Publishing track", JOptionPane.YES_NO_OPTION);
+			if (dialogresult == JOptionPane.YES_OPTION) {
+				String result = JOptionPane.showInputDialog(allRegionsViewPort,
+						"Please enter the name of the track", "my_track.ogg");
+				if (result != null && !result.equals("")) {
 
-            if (player.getFactory().getTrackNumber() ==0 )
-            {
-                Debug.displayErrorDialogAsync(allRegionsViewPort, null, "Nothing to save");
-                return;
-            }
+					if (result.indexOf(".ogg") == -1) {
+						result += ".ogg";
+					}
+					getPlayer().getOutput().setFileName(result);
 
-            double minStartTime = player.getMixer().getStartTimeSec();
-            if (minStartTime > 60)
-            {
-                Debug.displayErrorDialogAsync(allRegionsViewPort, null, "Cannot find any audio for a period of 1 minute. To publish your track, please move it to the beginning of the timeline.");
-                return;
-            }
+					isPublishDone = true;
 
+					getPlayer().getOutput().close();
 
-            int dialogresult = JOptionPane.showConfirmDialog(allRegionsViewPort, "Are you sure you want to publish this track? You won't be able to make any further edits after you publish it.", "Publishing track", JOptionPane.YES_NO_OPTION);
-            if (dialogresult == JOptionPane.YES_OPTION)
-            {
-                String result = JOptionPane.showInputDialog(allRegionsViewPort, "Please enter the name of the track", "my_track.ogg");
-                if (result != null && !result.equals(""))
-                {
+					// player.setGlobals(this);
+					// player.getOutput().setSaving(true);
+					try {
+						player.start();
+					} catch (Exception e) {
+						Debug.displayErrorDialogAsync(allRegionsViewPort, e,
+								"Error when publishing");
+					}
 
+				}
 
-                    if (result.indexOf(".ogg") == -1)
-                    {
-                        result += ".ogg";
-                    }
-                    getPlayer().getOutput().setFileName(result);
+			}
 
-                    isPublishDone = true;
+		}
 
-                   getPlayer().getOutput().close(); 
+	}
 
-                   //player.setGlobals(this);
-                   //player.getOutput().setSaving(true);
-                    try
-                    {
-                        player.start();
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.displayErrorDialogAsync(allRegionsViewPort, e, "Error when publishing");
-                    }
-
-                }
-
-            }
-
-
-        }
-
-    }
-
-    // autoscroll support for dragging and for the position grid
-
+	// autoscroll support for dragging and for the position grid
 	public final static int AUTO_SCROLL_PIXEL = 40;
 
 	/**
@@ -428,7 +406,7 @@ public class Globals implements ChangeListener {
 	 * mouse X coordinate
 	 * 
 	 * @param mouseX the absolute mouse x coordinate (where 0 corresponds to
-	 *            sample 0)
+	 *        sample 0)
 	 * @return the number of pixels to move, or 0
 	 */
 	int getAutoScrollPixels(int mouseX, boolean isViewPortChild) {
@@ -554,6 +532,5 @@ public class Globals implements ChangeListener {
 		}
 
 	}
-
 
 }

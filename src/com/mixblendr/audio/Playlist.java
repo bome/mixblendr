@@ -81,7 +81,8 @@ public class Playlist implements AudioInput {
 			AutomationObject el = elements.get(i);
 			long startTime = el.getStartTimeSamples();
 			if (startTime >= aost) {
-				sameTimeSameClass = (!isRegion && startTime == aost && el.isSameTypeInstance(ao));
+				sameTimeSameClass = (!isRegion && startTime == aost
+					&& el.isSameTypeInstance(ao));
 				break;
 			}
 			i++;
@@ -129,36 +130,31 @@ public class Playlist implements AudioInput {
 			onRemoval(ao);
 			initRegionPlayback();
 		}
-
-
-        return ret;
+		return ret;
 	}
 
+	/**
+	 * @return the start time of the first audio region in this track, in
+	 *         fractional seconds
+	 */
+	public double getStartTimeSeconds() {
+		double time = -1;
+		for (AutomationObject el : elements) {
+			if (el instanceof AudioRegion) {
+				AudioRegion audioRegion = (AudioRegion) el;
+				double regionTime = audioRegion.getStartTimeSeconds();
+				if (regionTime > -1) {
+					if (time == -1 || time > regionTime) {
+						time = regionTime;
+					}
+				}
 
-    public double getStartTime()
-    {
-        double time =-1;
-        for (AutomationObject el : elements)
-        {
-            if (el instanceof AudioRegion)
-            {
-                AudioRegion audioRegion = (AudioRegion)el;
-                double regionTime = audioRegion.getStartTimeSec();
-                if (regionTime > -1)
-                {
-                    if (time == -1 || time > regionTime)
-                    {
-                        time = regionTime;
-                    }
-                }
+			}
+		}
+		return time;
+	}
 
-            }
-        }
-
-        return time;
-    }
-
-    /**
+	/**
 	 * @return number of automation objects in this playlist
 	 */
 	public synchronized int getObjectCount() {
@@ -422,7 +418,8 @@ public class Playlist implements AudioInput {
 			if (written == 0) {
 				doSilence = true;
 			} else {
-				boolean currentRegionEnd = (currentRegion.isPlaybackEndReached() || forceFadeOut);
+				boolean currentRegionEnd = (currentRegion.isPlaybackEndReached()
+					|| forceFadeOut);
 				if (currentRegionEnd
 						&& currentRegion.needFadeOutAtCurrentPlaybackPosition()) {
 					// initialize the fadeout buffer

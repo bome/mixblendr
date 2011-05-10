@@ -29,13 +29,8 @@ public final class AudioFileFactory {
 	private AudioState state;
 	private List<AudioFile> audioFiles;
 
-    public List<AudioFile> getAudioFiles()
-    {
-        return audioFiles;
-    }
-
     /**
-	 * prevent instanciation without state object
+	 * prevent instantiation without state object
 	 */
 	private AudioFileFactory() {
 		super();
@@ -139,18 +134,7 @@ public final class AudioFileFactory {
 		return null;
 	}
 
-    public int getTrackNumber() {
-        int result =0;
-        if (audioFiles != null) {
-            result = audioFiles.size();
-        }
-        return result;
-    }
-
-
-
-
-    /** close all open files */
+	/** close all open files */
 	void close() {
 		for (AudioFile af : audioFiles) {
 			af.close();

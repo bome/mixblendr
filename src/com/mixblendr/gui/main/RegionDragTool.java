@@ -81,9 +81,9 @@ class RegionDragTool {
 	 * Return the URL from this transferable. Make sure that getTransferType
 	 * returned T_URL! Returns null if there is no valid URL.
 	 */
- 	@SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	public static URL getURL(Transferable t) {
- 		try {
+		try {
 			if (t.isDataFlavorSupported(urlFlavor)) {
 				Object td = t.getTransferData(urlFlavor);
 				if (td != null && (td instanceof URL)) {
@@ -91,7 +91,7 @@ class RegionDragTool {
 						debug("getURL: directly got this URL:" + td);
 					}
 					return (URL) td;
- 				}
+				}
 			} else if (t.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
 				Object fl = t.getTransferData(DataFlavor.javaFileListFlavor);
 				if (fl instanceof List<?>) {
@@ -101,8 +101,8 @@ class RegionDragTool {
 						return new URL("file:///"+f);
 					}
 				}
- 			}
- 		} catch (Exception e) {
+			}
+		} catch (Exception e) {
 			debug(e);
 			if (DEBUG) e.printStackTrace();
 		}

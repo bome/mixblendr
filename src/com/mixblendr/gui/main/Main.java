@@ -31,8 +31,7 @@ import com.mixblendr.util.FatalExceptionListener;
  * @author Florian Bomers
  */
 public class Main implements FatalExceptionListener, AutomationListener,
-		MPanel.PaintListener, KeyListener, AudioListener, ActionListener
-{
+		MPanel.PaintListener, KeyListener, AudioListener, ActionListener {
 
 	public final static String VERSION = "0.19";
 	public final static String NAME = "Mixblendr";
@@ -63,35 +62,32 @@ public class Main implements FatalExceptionListener, AutomationListener,
 	AutomationHandler volAutoHandler;
 	AutomationHandler panAutoHandler;
 
-    public boolean isSaving = false;
+	public boolean isSaving = false;
 
-    public JDialog publishingDialog =null;
-    public boolean isPublishing = false;
-    private boolean isPublishSuccess = false;
+	public JDialog publishingDialog = null;
+	public boolean isPublishing = false;
+	private boolean isPublishSuccess = false;
 
-    private Applet applet;
+	//TODO: use a nicer way to access applet
+	private Applet applet;
 
-    public Applet getApplet()
-    {
-        return applet;
-    }
+	public Applet getApplet() {
+		return applet;
+	}
 
-    public void setApplet(Applet applet)
-    {
-        this.applet = applet;
-    }
+	public void setApplet(Applet applet) {
+		this.applet = applet;
+	}
 
-    public double getDefaultTempo()
-    {
-        return defaultTempo;
-    }
+	public double getDefaultTempo() {
+		return defaultTempo;
+	}
 
-    public void setDefaultTempo(double defaultTempo)
-    {
-        this.defaultTempo = defaultTempo;
-    }
+	public void setDefaultTempo(double defaultTempo) {
+		this.defaultTempo = defaultTempo;
+	}
 
-    /**
+	/**
 	 * Create the GUI and initialize the GUI components. For thread safety, this
 	 * method should be invoked from the event-dispatching thread.
 	 */
@@ -624,25 +620,25 @@ public class Main implements FatalExceptionListener, AutomationListener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see com.mixblendr.util.FatalExceptionListener#fatalExceptionOccured(java.lang.Throwable,
-	 *      java.lang.String)
+	 * @see
+	 * com.mixblendr.util.FatalExceptionListener#fatalExceptionOccured(java.
+	 * lang.Throwable, java.lang.String)
 	 */
 	public void fatalExceptionOccured(Throwable t, String context) {
 		Debug.displayErrorDialogAsync(masterPanel, t, context);
 	}
 
-    public void showMessage(String title, String context)
-    {
-        Debug.displayInfoDialogAsync(masterPanel, title, context);
-    }
+	// TODO: remove
+	public void showMessage(String title, String context) {
+		Debug.displayInfoDialogAsync(masterPanel, title, context);
+	}
 
-    /*
-      * (non-Javadoc)
-      *
-      * @see com.mixblendr.audio.AudioListener#audioFileDownloadError(com.mixblendr.audio.AudioFile,
-      *      java.lang.Throwable)
-      */
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.mixblendr.audio.AudioListener#audioFileDownloadError(com.mixblendr
+	 * .audio.AudioFile, java.lang.Throwable)
+	 */
 	public void audioFileDownloadError(AudioFile file, Throwable t) {
 		String context = "while downloading " + file.getName();
 		if (t instanceof OutOfMemoryError) {
@@ -652,13 +648,12 @@ public class Main implements FatalExceptionListener, AutomationListener,
 		Debug.displayErrorDialogAsync(masterPanel, t, context);
 	}
 
-
-    /*
+	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see com.mixblendr.audio.AudioListener#audioRegionStateChange(com.mixblendr.audio.AudioTrack,
-	 *      com.mixblendr.audio.AudioRegion,
-	 *      com.mixblendr.audio.AudioRegion.State)
+	 * @see
+	 * com.mixblendr.audio.AudioListener#audioRegionStateChange(com.mixblendr
+	 * .audio.AudioTrack, com.mixblendr.audio.AudioRegion,
+	 * com.mixblendr.audio.AudioRegion.State)
 	 */
 	public void audioRegionStateChange(AudioTrack track, AudioRegion region,
 			State state) {
@@ -667,8 +662,9 @@ public class Main implements FatalExceptionListener, AutomationListener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see com.mixblendr.audio.AudioListener#audioTrackNameChanged(com.mixblendr.audio.AudioTrack)
+	 * @see
+	 * com.mixblendr.audio.AudioListener#audioTrackNameChanged(com.mixblendr
+	 * .audio.AudioTrack)
 	 */
 	public void audioTrackNameChanged(AudioTrack track) {
 		// nothing to do
@@ -720,9 +716,9 @@ public class Main implements FatalExceptionListener, AutomationListener,
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see com.mixblendr.audio.AutomationListener#automationEvent(com.mixblendr.audio.AudioTrack,
-	 *      com.mixblendr.audio.AutomationObject)
+	 * @see
+	 * com.mixblendr.audio.AutomationListener#automationEvent(com.mixblendr.
+	 * audio.AudioTrack, com.mixblendr.audio.AutomationObject)
 	 */
 	public void automationEvent(AudioTrack track, AutomationObject ao) {
 		int index = track.getIndex();
@@ -783,9 +779,9 @@ public class Main implements FatalExceptionListener, AutomationListener,
 
 	/*
 	 * paints the allRegion's position grid
-	 * 
-	 * @see com.mixblendr.skin.MPanel.PaintListener#panelBeforePaint(com.mixblendr.skin.MPanel,
-	 *      java.awt.Graphics, java.awt.Rectangle)
+	 * @see
+	 * com.mixblendr.skin.MPanel.PaintListener#panelBeforePaint(com.mixblendr
+	 * .skin.MPanel, java.awt.Graphics, java.awt.Rectangle)
 	 */
 	public void panelBeforePaint(MPanel panel, Graphics g, Rectangle clip) {
 		if (DEBUG_REPAINT) {
@@ -818,9 +814,10 @@ public class Main implements FatalExceptionListener, AutomationListener,
 
 	/**
 	 * Global key listener. For apps, can be done using
-	 * Toolkit.getDefaultToolkit().addAWTEventListener(this,AWTEvent.KEY_EVENT_MASK),
-	 * but that doesn't work in applet, so a global key listener (i.e. this) is
-	 * registered as KeyListener to all focusable components in ButtonPanel.
+	 * Toolkit.getDefaultToolkit
+	 * ().addAWTEventListener(this,AWTEvent.KEY_EVENT_MASK), but that doesn't
+	 * work in applet, so a global key listener (i.e. this) is registered as
+	 * KeyListener to all focusable components in ButtonPanel.
 	 * 
 	 * @see java.awt.event.AWTEventListener#eventDispatched(java.awt.AWTEvent)
 	 */
@@ -920,172 +917,165 @@ public class Main implements FatalExceptionListener, AutomationListener,
 		eventDispatched(e);
 	}
 
-    public void setUrl(String url)
-    {
-        player.getOutput().setUrl(url);
-    }
+	// TODO: move all the below to an own class "Publisher" or so
 
-    private String redirectUrl;
-    public void setRedirectUrl(String redirectUrl)
-    {
-        this.redirectUrl = redirectUrl;
-    }
+	// TODO: rename to "setPublishURL()" or so
+	public void setUrl(String url) {
+		player.getOutput().setUrl(url);
+	}
 
-    public void  showProgressDialog() {
-        String title = "Saving...";
-        UIManager.put("ProgressMonitor.progressText", title);
-//        progressMonitor = new ProgressMonitor(masterPanel,message, note, min, max);
+	// TODO: what is the redirectURL used for?
+	private String redirectUrl;
 
-//        JOptionPane pane;
-//
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                //JOptionPane.showMessageDialog(masterPanel, "saving", "xxx",
-                 //       JOptionPane.INFORMATION_MESSAGE);
-//                String message = "Saving file...plase wait";
-//                String note ="Mixing tracks";
-//                String title = "Saving...";
-//                UIManager.put("ProgressMonitor.progressText", title);
-//                int min = 0;
-//                int max = 100;
-//                 progressMonitor = new ProgressMonitor(masterPanel,message, note, min, max);
-//                JOptionPane pane = new JOptionPane();
-//                pane.createDialog("xxx");
-                isPublishing = true;
-                isPublishSuccess = false;
-                final JPanel panel = new JPanel();
-                //panel.setLayout( new BoxLayout(panel, BoxLayout.Y_AXIS));
-                panel.setLayout( new BorderLayout(10,10));
-                panel.setPreferredSize(new Dimension(300,75));
-                //rderLayout(20,20));
-                JLabel label = new JLabel("      Uploading - this may take a few minutes.");
-                label.setFont( new Font("Arial", Font.PLAIN, 12));
-                JButton btnOK = new JButton("OK");
-                btnOK.setVisible(false);
+	public void setRedirectUrl(String redirectUrl) {
+		this.redirectUrl = redirectUrl;
+	}
 
-                panel.add(label,BorderLayout.CENTER,0);
-                panel.add(btnOK, BorderLayout.PAGE_END,1);
+	public void showProgressDialog() {
+		String title = "Saving...";
+		UIManager.put("ProgressMonitor.progressText", title);
+		// progressMonitor = new ProgressMonitor(masterPanel,message, note, min,
+		// max);
 
-                Rectangle r = masterPanel.getBounds();
-                publishingDialog = new JDialog((Frame)null,
-                                             "Publishing...",
-                                             true);
-                publishingDialog.setContentPane(panel);
-                //publishingDialog.setPreferredSize(new Dimension(300,200));
-                publishingDialog.setBounds((int)r.getCenterX(),(int)r.getCenterY(), 300,200);
-                //
-                publishingDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-                publishingDialog.setResizable(false);
+		// JOptionPane pane;
+		//
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				// JOptionPane.showMessageDialog(masterPanel, "saving", "xxx",
+				// JOptionPane.INFORMATION_MESSAGE);
+				// String message = "Saving file...plase wait";
+				// String note ="Mixing tracks";
+				// String title = "Saving...";
+				// UIManager.put("ProgressMonitor.progressText", title);
+				// int min = 0;
+				// int max = 100;
+				// progressMonitor = new ProgressMonitor(masterPanel,message,
+				// note, min, max);
+				// JOptionPane pane = new JOptionPane();
+				// pane.createDialog("xxx");
+				isPublishing = true;
+				isPublishSuccess = false;
+				final JPanel panel = new JPanel();
+				// panel.setLayout( new BoxLayout(panel, BoxLayout.Y_AXIS));
+				panel.setLayout(new BorderLayout(10, 10));
+				panel.setPreferredSize(new Dimension(300, 75));
+				// rderLayout(20,20));
+				JLabel label = new JLabel(
+						"      Uploading - this may take a few minutes.");
+				label.setFont(new Font("Arial", Font.PLAIN, 12));
+				JButton btnOK = new JButton("OK");
+				btnOK.setVisible(false);
 
+				panel.add(label, BorderLayout.CENTER, 0);
+				panel.add(btnOK, BorderLayout.PAGE_END, 1);
 
-//                final JOptionPane optionPane = new JOptionPane(
-//                                "Uploading... Please wait",
-//                                JOptionPane.INFORMATION_MESSAGE);
-//
-//
-//
-//                optionPane.addPropertyChangeListener(
-//                    new PropertyChangeListener() {
-//                        public void propertyChange(PropertyChangeEvent e) {
-//                            String prop = e.getPropertyName();
-//
-//                            if (publishingDialog.isVisible()
-//                             && (e.getSource() == optionPane)
-//                             && (prop.equals(JOptionPane.VALUE_PROPERTY) ||
-//                                 prop.equals(JOptionPane.INPUT_VALUE_PROPERTY))) {
-//                                //If you were going to check something
-//                                //before closing the window, you'd do
-//                                //it here.
-//                                publishingDialog.setVisible(false);
-//                            }
-//                        }
-//                    });
-                publishingDialog.pack();
-                publishingDialog.setVisible(true);
-            }
-        });
+				Rectangle r = masterPanel.getBounds();
+				publishingDialog = new JDialog((Frame) null, "Publishing...",
+						true);
+				publishingDialog.setContentPane(panel);
+				// publishingDialog.setPreferredSize(new Dimension(300,200));
+				publishingDialog.setBounds((int) r.getCenterX(),
+						(int) r.getCenterY(), 300, 200);
+				//
+				publishingDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+				publishingDialog.setResizable(false);
 
-    }
+				// final JOptionPane optionPane = new JOptionPane(
+				// "Uploading... Please wait",
+				// JOptionPane.INFORMATION_MESSAGE);
+				//
+				// optionPane.addPropertyChangeListener(
+				// new PropertyChangeListener() {
+				// public void propertyChange(PropertyChangeEvent e) {
+				// String prop = e.getPropertyName();
+				//
+				// if (publishingDialog.isVisible()
+				// && (e.getSource() == optionPane)
+				// && (prop.equals(JOptionPane.VALUE_PROPERTY) ||
+				// prop.equals(JOptionPane.INPUT_VALUE_PROPERTY))) {
+				// //If you were going to check something
+				// //before closing the window, you'd do
+				// //it here.
+				// publishingDialog.setVisible(false);
+				// }
+				// }
+				// });
+				publishingDialog.pack();
+				publishingDialog.setVisible(true);
+			}
+		});
 
-//    public void setProgressDialogMessage(String message)
-//    {
-//        if (publishingDialog != null)
-//        {
-//            JPanel panel =(JPanel) publishingDialog.getContentPane();
-//            Component component = panel.getComponent(0);
-//            if (component instanceof JLabel)
-//            {
-//                JLabel label = (JLabel)component;
-//                label.setText(message);
-//            }
-//
-//        }
-//    }
+	}
 
-    public void setSuccess()
-    {
-          if (publishingDialog != null)
-          {
-                isPublishSuccess = true;      
-                JPanel panel = (JPanel)publishingDialog.getContentPane();
-                JButton btnOK = (JButton)panel.getComponent(1);
-                btnOK.addActionListener(this);
+	// public void setProgressDialogMessage(String message)
+	// {
+	// if (publishingDialog != null)
+	// {
+	// JPanel panel =(JPanel) publishingDialog.getContentPane();
+	// Component component = panel.getComponent(0);
+	// if (component instanceof JLabel)
+	// {
+	// JLabel label = (JLabel)component;
+	// label.setText(message);
+	// }
+	//
+	// }
+	// }
 
-                btnOK.setVisible(true);
+	// TODO: rename to publishSuccess(), make private
+	public void setSuccess() {
+		if (publishingDialog != null) {
+			isPublishSuccess = true;
+			JPanel panel = (JPanel) publishingDialog.getContentPane();
+			JButton btnOK = (JButton) panel.getComponent(1);
+			btnOK.addActionListener(this);
 
-                JLabel label = (JLabel)panel.getComponent(0);
-                label.setText("      Publishing successful!");
-          }
-    }
+			btnOK.setVisible(true);
 
-    public void setFailed()
-    {
-        if (publishingDialog != null)
-        {
-            JPanel panel = (JPanel)publishingDialog.getContentPane();
-            JButton btnOK = (JButton)panel.getComponent(1);
-            btnOK.setVisible(true);
-            btnOK.addActionListener(this);
+			JLabel label = (JLabel) panel.getComponent(0);
+			label.setText("      Publishing successful!");
+		}
+	}
 
-             JLabel label = (JLabel)panel.getComponent(0);
-             label.setText("      Publishing failed!");
-        }
+	// TODO: rename to publishFailed(), make private
+	public void setFailed() {
+		if (publishingDialog != null) {
+			JPanel panel = (JPanel) publishingDialog.getContentPane();
+			JButton btnOK = (JButton) panel.getComponent(1);
+			btnOK.setVisible(true);
+			btnOK.addActionListener(this);
 
-    }
-    public void hideProgressDialog()
-    {
-        if (isPublishing && publishingDialog != null){
-            publishingDialog.dispose();
-            isPublishing = false;
-        }
-    }
+			JLabel label = (JLabel) panel.getComponent(0);
+			label.setText("      Publishing failed!");
+		}
 
-    public void actionPerformed(ActionEvent e)
-    {
-        if (publishingDialog != null)
-        {
-            if (isPublishSuccess)
-            {
+	}
 
-                try
-                {
-                    publishingDialog.dispose();
-                    close();
-                    URL url = new URL(redirectUrl);
-                    getApplet().getAppletContext().showDocument(url);
-                }
-                catch (MalformedURLException e1)
-                {
-                    
-                }
+	// TODO: rename to hidePublishProgressDialog(), make private
+	public void hideProgressDialog() {
+		if (isPublishing && publishingDialog != null) {
+			publishingDialog.dispose();
+			isPublishing = false;
+		}
+	}
 
+	// TODO: do not use global listener
+	public void actionPerformed(ActionEvent e) {
+		if (publishingDialog != null) {
+			if (isPublishSuccess) {
 
+				try {
+					publishingDialog.dispose();
+					close();
+					URL url = new URL(redirectUrl);
+					getApplet().getAppletContext().showDocument(url);
+				} catch (MalformedURLException e1) {
 
-            }
-            else
-            {
-                publishingDialog.dispose();
-            }
-        }
-    }
+				}
+
+			} else {
+				publishingDialog.dispose();
+			}
+		}
+	}
 }

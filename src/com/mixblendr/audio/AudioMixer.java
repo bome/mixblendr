@@ -91,26 +91,36 @@ public class AudioMixer implements FloatSampleInput {
 		}
 	}
 
+	/**
+	 * @return true if no tracks or only empty tracks are loaded
+	 */
+	public synchronized boolean isEmpty() {
+		if (tracks.size() == 0) {
+			return true;
+		}
+		for (AudioTrack t : tracks) {
+			if (t.getPlaylist().getAudioRegionCount() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-    public synchronized double getStartTimeSec()
-    {
-        double time = -1;
-        for (AudioTrack t : tracks)
-        {
-            double trackTime = t.getStartTime();
-            if (trackTime > -1)
-            {
-                if (time == -1 || time > trackTime)
-                {
-                   time = trackTime;
-                }
-            }
-        }
+	/** get the start time, in seconds, of the first region in all tracks. */
+	public synchronized double getStartTimeSeconds() {
+		double time = -1;
+		for (AudioTrack t : tracks) {
+			double trackTime = t.getPlaylist().getStartTimeSeconds();
+			if (trackTime > -1) {
+				if (time == -1 || time > trackTime) {
+					time = trackTime;
+				}
+			}
+		}
+		return time;
+	}
 
-        return time;
-    }
-
-    /**
+	/**
 	 * Remove the track.
 	 * 
 	 * @param t the track to remove
@@ -405,12 +415,7 @@ public class AudioMixer implements FloatSampleInput {
 	private long readImpl1(long samplePos, long requestedNewPosition,
 			AudioTrack track, FloatSampleBuffer buffer, int offset,
 			int sampleCount) {
-
-        //debug("read function");
-        //debug("Sample pos=" + samplePos + " offset=" + offset + " sample count" + sampleCount );
-
-        
-        // handle looping
+		// handle looping
 		if (state.isLoopEnabled()) {
 			long loopEnd = state.getLoopEndSamples();
 			if (requestedNewPosition >= 0 && requestedNewPosition <= loopEnd
@@ -447,9 +452,7 @@ public class AudioMixer implements FloatSampleInput {
 				ret = requestedNewPosition;
 			}
 		}
-
-        //debug ("Return read:" + ret);
-        return ret;
+		return ret;
 	}
 
 	/**
@@ -496,11 +499,7 @@ public class AudioMixer implements FloatSampleInput {
 			buffer.mix(fadeOutBuffer, 0, offset, fadeLen);
 			if (TRACE_FADE) onnl("MixerFade ");
 		}
-
-        //debug("Sample pos=" + samplePos);
-        //debug("Sample count=" + sampleCount);
-        //debug ("Return samplePos + sampleCount=" + (samplePos + sampleCount));
-        return samplePos + sampleCount;
+		return samplePos + sampleCount;
 
 	}
 

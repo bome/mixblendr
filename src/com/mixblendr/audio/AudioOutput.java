@@ -23,7 +23,7 @@ public class AudioOutput {
 	private final static boolean TRACE = false;
 	private final static boolean DEBUG = false;
 	private final static boolean DEBUG_WRITE_TO_FILE = false;
-	 
+
 	/** for debugging only: use java sound audio engine (if it exists) */
 	private static final boolean FORCE_JAVA_SOUND_AUDIO_ENGINE = false;
 
@@ -33,8 +33,9 @@ public class AudioOutput {
 	protected AudioFormat format;
 
 	public static final AudioFormat DEFAULT_FORMAT = new AudioFormat(44100f,
-			//16, 2, true, AudioUtils.isSystemBigEndian());
-            16, 2, true, false);
+	// TODO: revert to isSystemBigEndian()
+	// 16, 2, true, AudioUtils.isSystemBigEndian());
+			16, 2, true, false);
 
 	private static final double DEFAULT_BUFFER_SIZE_MILLIS = 40;
 	private static final double DEFAULT_SLICE_SIZE_MILLIS = 10;
@@ -47,16 +48,18 @@ public class AudioOutput {
 
 	/** the thread instance feeding/reading the audio device */
 	private AOThread thread = null;
-    private SaveThread saveThread = null;
 
-    /** flag to signal the start() method was called */
+	// TODO: move SaveThread to own class
+	private SaveThread saveThread = null;
+
+	/** flag to signal the start() method was called */
 	private boolean started = false;
 
 	/**
 	 * the mixer info to retrieve the data line from
 	 */
 	private Mixer.Info mixerInfo;
-    private AudioPlayer audioPlayer;
+	private AudioPlayer audioPlayer;
 	/**
 	 * the buffer size in milliseconds
 	 */
@@ -72,45 +75,41 @@ public class AudioOutput {
 
 	protected AudioState state;
 
-    private String url;
-    private boolean  isPublishDone = false;
+	// TODO: move to Publish class, rename methods
 
-    //private File tempFile;
+	private String url;
+	private boolean isPublishDone = false;
 
-    private String fileName = "";
+	private String fileName = "";
 
-    private boolean isPlaying  = false;
-    
-    public void setFileName(String value)
-    {
-        fileName = value;
-    }
-    public String getFileName()
-    {
-        return fileName;
-    }
+	private boolean playing = false;
 
-    public String getUrl()
-    {
-        return url;
-    }
+	public void setFileName(String value) {
+		fileName = value;
+	}
 
-    public void setUrl(String url)
-    {
-        this.url = url;
-    }
+	public String getFileName() {
+		return fileName;
+	}
 
-    public boolean IsPlaying() {
-        return isPlaying;
-    }
+	public String getUrl() {
+		return url;
+	}
 
+	public void setUrl(String url) {
+		this.url = url;
+	}
 
+	public boolean isPlaying() {
+		return playing;
+	}
 
-    /** create an instance of AudioOutput */
-	public AudioOutput(AudioPlayer audioPlayer,   AudioState state) {
+	/** create an instance of AudioOutput */
+	// TODO: remove param audioPlayer
+	public AudioOutput(AudioPlayer audioPlayer, AudioState state) {
 		format = DEFAULT_FORMAT;
-        this.audioPlayer = audioPlayer;
-        this.state = state;
+		this.audioPlayer = audioPlayer;
+		this.state = state;
 		setBufferSizeMillis(DEFAULT_BUFFER_SIZE_MILLIS);
 		setSliceSizeMillis(DEFAULT_SLICE_SIZE_MILLIS);
 		// populate some state fields
@@ -138,8 +137,7 @@ public class AudioOutput {
 		SourceDataLine line = null;
 
 		if (thread == null || thread.closed || thread.getLine() == null) {
-			String mixerName = (mixerInfo != null) ? mixerInfo.getName()
-					: "(default)";
+			String mixerName = (mixerInfo != null) ? mixerInfo.getName() : "(default)";
 			// retrieve data line
 			if (DEBUG) {
 				debug("creating audio device from mixer '" + mixerName + "'...");
@@ -273,41 +271,39 @@ public class AudioOutput {
 	 * from the input streams and written to the output device.
 	 */
 	public synchronized void start() throws LineUnavailableException {
-        if (thread != null) {
-            if (!started) {
-                startAudioDevice();
-                started = true;
-            }
-        } else {
-            if (!started && !isPublishDone){
-                saveThread = new SaveThread();
-                saveThread.start();
-                isPublishDone = true;
-                started = true;
-                if (fatalExceptionListener != null) {
-                    fatalExceptionListener.showProgressDialog();
-                }
-            }
+		if (thread != null) {
+			if (!started) {
+				startAudioDevice();
+				started = true;
+			}
+		} else {
+			if (!started && !isPublishDone) {
+				saveThread = new SaveThread();
+				saveThread.start();
+				isPublishDone = true;
+				started = true;
+				if (fatalExceptionListener != null) {
+					fatalExceptionListener.showProgressDialog();
+				}
+			}
 
-        }
+		}
 
-    }
+	}
 
 	/**
 	 * Stop the audio output thread and IO.
 	 */
 	public synchronized void stop(boolean immediate) {
-        
-        if (started) {
+
+		if (started) {
 			// quit thread
 			if (thread != null) {
 				thread.doStop(immediate);
+			} else if (saveThread != null) {
+				saveThread.doStop(immediate);
 			}
-            else if (saveThread != null)
-            {
-                saveThread.doStop(immediate);
-            }
-            started = false;
+			started = false;
 		}
 	}
 
@@ -372,7 +368,7 @@ public class AudioOutput {
 	}
 
 	/**
-	 * Thread to continously read audio data from the source, convert it to a
+	 * Thread to continuously read audio data from the source, convert it to a
 	 * byte stream, and write to the selected sound card.
 	 * 
 	 * @author Florian Bomers
@@ -449,8 +445,8 @@ public class AudioOutput {
 			stopped = false;
 			doDrain = false;
 			configChange = true;
-            isPlaying = true;
-            synchronized (this) {
+			playing = true;
+			synchronized (this) {
 				this.notifyAll();
 			}
 		}
@@ -481,8 +477,8 @@ public class AudioOutput {
 					configChange = true;
 				}
 				this.notifyAll();
-                isPlaying = false;
-            }
+				playing = false;
+			}
 		}
 
 		/** call this method to terminate this thread */
@@ -544,7 +540,8 @@ public class AudioOutput {
 			if (DEBUG_WRITE_TO_FILE) {
 				try {
 					debugOut = new FileOutputStream("mixblendr.pcm");
-				} catch (FileNotFoundException fnfe) {}
+				} catch (FileNotFoundException fnfe) {
+				}
 			}
 			try {
 				while (!closed) {
@@ -556,8 +553,7 @@ public class AudioOutput {
 							stopped = true;
 							if (!closed && localLine != null
 									&& localLine.isRunning()) {
-								if (TRACE)
-									debug(getName() + ": playing out...");
+								if (TRACE) debug(getName() + ": playing out...");
 								localLine.drain();
 								localLine.stop();
 								localLine.flush();
@@ -567,8 +563,8 @@ public class AudioOutput {
 							}
 						}
 						if (localLine != line) {
-							if (TRACE)
-								debug(getName() + ": configuring audio device");
+							if (TRACE) debug(getName()
+									+ ": configuring audio device");
 							localLine = line;
 							if (localLine != null && !closed) {
 								localFormat = format;
@@ -592,8 +588,8 @@ public class AudioOutput {
 										+ " waiting for start");
 							}
 							synchronized (this) {
-                                debug("wait");
-                                wait();
+								debug("wait");
+								wait();
 							}
 							if (TRACE) debug(getName() + ": woke up");
 						}
@@ -625,13 +621,11 @@ public class AudioOutput {
 							localInput.read(floatBuffer);
 							if (doFadeIn) {
 								floatBuffer.linearFade(0, 1);
-								if (TRACE)
-									debug(getName() + ": doing fade-in");
+								if (TRACE) debug(getName() + ": doing fade-in");
 								doFadeIn = false;
 							} else if (doFadeOut) {
 								floatBuffer.linearFade(1, 0);
-								if (TRACE)
-									debug(getName() + ": doing fade-out");
+								if (TRACE) debug(getName() + ": doing fade-out");
 								doFadeOut = false;
 								doDrain = true;
 								configChange = true;
@@ -645,7 +639,7 @@ public class AudioOutput {
 							if (!localLine.isRunning()) {
 								localLine.start();
 							}
- 							localLine.write(byteBuffer, 0, n);
+							localLine.write(byteBuffer, 0, n);
 							if (debugOut != null) {
 								debugOut.write(byteBuffer, 0, n);
 							}
@@ -655,8 +649,8 @@ public class AudioOutput {
 					}
 				}
 			} catch (Throwable t) {
-                isPlaying = false;
-                if (!closed) {
+				playing = false;
+				if (!closed) {
 					if (fatalExceptionListener != null) {
 						fatalExceptionListener.fatalExceptionOccured(t,
 								getName());
@@ -667,350 +661,214 @@ public class AudioOutput {
 			}
 			if (TRACE) debug(getName() + ": exit.");
 			closed = true;
-			if (debugOut!=null) {
+			if (debugOut != null) {
 				try {
 					debugOut.close();
-				} catch (IOException ioe) {}
+				} catch (IOException ioe) {
+				}
 			}
-            isPlaying = false;
-        }
+			playing = false;
+		}
 	}
 
+	private class SaveThread extends Thread {
 
-    private class SaveThread extends Thread {
+		/** flag to signal a requested stop of this thread */
+		private volatile boolean stopped = true;
 
-        /** flag to signal a requested stop of this thread */
-        private volatile boolean stopped = true;
+		/** flag to signal a requested closing of this thread */
+		protected volatile boolean closed = false;
 
+		private FloatSampleBuffer floatBuffer;
+		private byte[] byteBuffer;
 
-        /** flag to signal a requested closing of this thread */
-        protected volatile boolean closed = false;
+		private boolean loop = false;
+		private long startPosition;
+		private File tempFile;
 
-        //protected volatile boolean configChange = false;
+		/** create a new instance of the IO thread */
+		public SaveThread() {
+			super("SaveAudio Thread");
+			setPriority(THREAD_PRIORITY);
 
-        //private SourceDataLine line;
+			try {
+				tempFile = File.createTempFile("mixblendr", "temp");
+				tempFile.deleteOnExit();
+			} catch (Throwable t) {
 
-        private FloatSampleBuffer floatBuffer;
-        private byte[] byteBuffer;
+			}
+			stopped = false;
+			loop = audioPlayer.isLoopEnabled();
+			audioPlayer.setLoopEnabled(false);
 
-        //private boolean isSaveToFile = false;
-        //private VorbisEncoder vorbisEncoder;
-        private boolean loop = false;
-        private long startPosition;
-        private File tempFile;
-        /** create a new instance of the IO thread */
-        public SaveThread() {
-            super("SaveAudio Thread");
-            //this.line = line;
-            setPriority(THREAD_PRIORITY);
+			startPosition = audioPlayer.getPositionSamples();
+			audioPlayer.setPositionSamples(0);
 
-
-            //progressDialog = new ProgressFrame((Frame)null);
-            //progressDialog.setTextMessage("Saving data.");
-
-            try {
-                tempFile = File.createTempFile("mixblendr","temp");
-                tempFile.deleteOnExit();
-            } catch (Throwable t) {
-
-            }
-            stopped = false;
-            //doDrain = false;
-            //configChange = true;
-
-            loop = audioPlayer.isLoopEnabled();
-            audioPlayer.setLoopEnabled(false);
-
-            startPosition = audioPlayer.getPositionSamples();
-            audioPlayer.setPositionSamples(0);
-
-            synchronized (this) {
+			synchronized (this) {
 				this.notifyAll();
 			}
+		}
 
-            //start();
-        }
+		/** create the temporary float and byte buffers for reading */
+		private void createBuffers() {
+			// get the slice size in terms of the buffer size
+			int sliceSizeSamples = getSliceSampleCount();
+			int sliceSizeBytes = sliceSizeSamples * format.getFrameSize();
+			if (DEBUG) {
+				debug(getName() + ": slice time: " + sliceSizeBytes
+						+ " bytes = "
+						+ AudioUtils.bytes2MillisD(sliceSizeBytes, format)
+						+ "ms");
+			}
+			// calculate number of samples
+			floatBuffer = new FloatSampleBuffer(format.getChannels(),
+					sliceSizeSamples, format.getSampleRate());
+			byteBuffer = new byte[sliceSizeBytes];
+		}
 
-        /**
-         * @param line the line to set
-         */
-//        void setLine(SourceDataLine line) {
-//            if (this.line != null) {
-//                this.line.close();
-//            }
-//            this.line = line;
-//            configChange = true;
-//        }
-
-        /** create the temporary float and byte buffers for reading */
-        private void createBuffers() {
-            // get the slice size in terms of the buffer size
-            int sliceSizeSamples = getSliceSampleCount();
-            // (line.getBufferSize() / getSlicesPerBuffer() /
-            // line.getFormat().getFrameSize());
-            int sliceSizeBytes = sliceSizeSamples * format.getFrameSize();
-            // sliceSizeSamples * line.getFormat().getFrameSize();
-            if (DEBUG) {
-                debug(getName() + ": slice time: " + sliceSizeBytes
-                        + " bytes = "
-                        + AudioUtils.bytes2MillisD(sliceSizeBytes, format)
-                        + "ms");
-            }
-            // calculate number of samples
-            floatBuffer = new FloatSampleBuffer(format.getChannels(),
-                    sliceSizeSamples, format.getSampleRate());
-            byteBuffer = new byte[sliceSizeBytes];
-        }
-
-        /** return the flag if this thread should cease operation immediately. */
-        @SuppressWarnings("unused")
+		/** return the flag if this thread should cease operation immediately. */
+		@SuppressWarnings("unused")
 		protected final boolean isClosed() {
-            return closed;
-        }
+			return closed;
+		}
 
-        /** call this method to pause this thread */
-        @SuppressWarnings("unused")
+		/** call this method to pause this thread */
+		@SuppressWarnings("unused")
 		public void doResume() {
-            //toFile();
+			stopped = false;
 
-            stopped = false;
-            //doDrain = false;
-            //configChange = true;
+			loop = audioPlayer.isLoopEnabled();
+			audioPlayer.setLoopEnabled(false);
 
-            loop = audioPlayer.isLoopEnabled();
-            audioPlayer.setLoopEnabled(false);
+			startPosition = audioPlayer.getPositionSamples();
+			audioPlayer.setPositionSamples(0);
+			synchronized (this) {
+				this.notifyAll();
+			}
+		}
 
-            startPosition = audioPlayer.getPositionSamples();
-            audioPlayer.setPositionSamples(0);
-            System.out.println("start saving");
-            //progressDialog.setVisible(true);
-            synchronized (this) {
-                this.notifyAll();
-            }
-        }
+		/** call this method to pause this thread */
+		public void doStop(boolean immediate) {
+			if (immediate) {
+				stopped = true;
+			}
+			audioPlayer.setLoopEnabled(loop);
+			System.out.println("stop saving");
 
-        /** call this method to pause this thread */
-        public void doStop(boolean immediate) {
-            //progressDialog.setVisible(false);
-            if (immediate) {
-                stopped = true;
-                //configChange = true;
-            }
-            //doDrain = false;
-            audioPlayer.setLoopEnabled(loop);
-            System.out.println("stop saving");
+			synchronized (this) {
+				if (immediate) {
+					if (DEBUG) {
+						debug("stopped audio device.");
+					}
+				}
 
-            synchronized (this) {
-                if (immediate) {
-                    if (DEBUG) {
-                        debug("stopped audio device.");
-                    }
-                }
+				if (!doFadeOut) {
+					stopped = true;
+				}
+				this.notifyAll();
+			}
+			audioPlayer.setPositionSamples(startPosition);
+		}
 
-
-                if (!doFadeOut) {
-                    stopped = true;
-                    //configChange = true;
-                }
-                this.notifyAll();
-            }
-            audioPlayer.setPositionSamples(startPosition);
-        }
-
-        /** call this method to terminate this thread */
-        @SuppressWarnings("unused")
+		/** call this method to terminate this thread */
+		@SuppressWarnings("unused")
 		public void doClose() {
-            closed = true;
-            doStop(true);
-            try {
-                if (TRACE) {
-                    debug(getName() + ": waiting for audio thread to exit...");
-                }
-                join(2000);
-                if (!isAlive()) {
-                    if (DEBUG) {
-                        debug(getName() + ": thread exited.");
-                    }
-                } else {
-                    if (Debug.DEBUG) {
-                        debug(getName()
-                                + ": thread is persistent, interrupt it");
-                    }
-                    interrupt();
-                    join(1000);
-                    if (!isAlive()) {
-                        if (DEBUG) {
-                            debug(getName() + ": thread exited.");
-                        }
-                    } else {
-                        if (Debug.DEBUG) {
-                            debug(getName() + ": could not stop thread");
-                        }
-                    }
-                }
-            } catch (InterruptedException ie) {
-                // nothing
-            } catch (Exception e) {
-                // nothing
-            }
-        }
+			closed = true;
+			doStop(true);
+			try {
+				if (TRACE) {
+					debug(getName() + ": waiting for save thread to exit...");
+				}
+				join(2000);
+				if (!isAlive()) {
+					if (DEBUG) {
+						debug(getName() + ": thread exited.");
+					}
+				} else {
+					if (Debug.DEBUG) {
+						debug(getName()
+								+ ": thread is persistent, interrupt it");
+					}
+					interrupt();
+					join(1000);
+					if (!isAlive()) {
+						if (DEBUG) {
+							debug(getName() + ": thread exited.");
+						}
+					} else {
+						if (Debug.DEBUG) {
+							debug(getName() + ": could not stop thread");
+						}
+					}
+				}
+			} catch (InterruptedException ie) {
+				// nothing
+			} catch (Exception e) {
+				// nothing
+			}
+		}
 
-        /** set to true in the run loop for a smooth stop */
-        //private volatile boolean doDrain = false;
+		/** set to true in the stop method for a smooth stop */
+		private volatile boolean doFadeOut = false;
 
-        /** set to true in the stop method for a smooth stop */
-        private volatile boolean doFadeOut = false;
+		/**
+		 * main thread method: read from input, convert to byte data, write to
+		 * audio device.
+		 */
+		@Override
+		public void run() {
+			if (TRACE) debug(getName() + ": started.");
+			AudioFormat localFormat = format;
+			FloatSampleInput localInput = input;
 
-        /**
-         * main thread method: read from input, convert to byte data, write to
-         * audio device.
-         */
-        @Override
-        public void run() {
-            if (TRACE)
-                debug(getName() + ": started.");
-            AudioFormat localFormat = format;
-            //SourceDataLine localLine = null;
-            FloatSampleInput localInput = input;
-            //configChange = true;
-            //boolean doFadeIn = false;
+			try {
 
+				DataOutputStream dos = new DataOutputStream(
+						new FileOutputStream(tempFile));
 
-            try {
+				createBuffers();
+				localInput = input;
+				localFormat = format;
+				while (!stopped) {
 
-                DataOutputStream dos = new DataOutputStream(new FileOutputStream(tempFile));
+					if (dos != null) {
+						// read from the input line
+						if (localInput != null) {
+							localInput.read(floatBuffer);
+						}
+						// convert to byte
+						int n = floatBuffer.convertToByteArray(byteBuffer, 0,
+								localFormat);
+						// write the audio data to soundcard
+						dos.write(byteBuffer, 0, n);
+						// update the state with this new buffer
+						state.bufferWrittenToOutput();
+					}
+				}
 
-                createBuffers();
-                localInput = input;
-                localFormat = format;
-                while (!stopped) {
+				if (dos.size() > 0) {
+					// encoding in ogg format and send to the server
+					dos.close();
+					VorbisEncoder vorbisEncoder = new VorbisEncoder();
+					vorbisEncoder.setFatalExceptionListener(fatalExceptionListener);
+					vorbisEncoder.encode(tempFile, url, getFileName());
+					audioPlayer.close();
+				}
 
-//                        if (!doFadeIn)
-//                        {
-//                            // init playback with a couple zero samples to
-//                            // prevent click
-//                            int len = (int) (state.getSampleRate() / 400)
-//                                    * format.getFrameSize();
-//                            if (len > byteBuffer.length) {
-//                                len = byteBuffer.length;
-//                            }
-//
-//                            for (int i = 0; i < len; i++) {
-//                                byteBuffer[i] = 0;
-//                            }
-//                            dos.write(byteBuffer, 0, len);
-//                            doFadeIn = true;
-//                        }
-                    //} else
-                    if (dos != null) {
-                        // read from the input line
-                        if (localInput != null) {
-                            // o("+");
-                            localInput.read(floatBuffer);
-                            // o("-");
-//                            if (doFadeIn) {
-//                                floatBuffer.linearFade(0, 1);
-//                                if (TRACE)
-//                                    debug(getName() + ": doing fade-in");
-//                                doFadeIn = false;
-//                            } else if (doFadeOut) {
-//                                floatBuffer.linearFade(1, 0);
-//                                if (TRACE)
-//                                    debug(getName() + ": doing fade-out");
-//                                doFadeOut = false;
-//                                doDrain = true;
-//                            }
-                        }
-                        // convert to byte
-                        int n = floatBuffer.convertToByteArray(byteBuffer, 0,
-                                localFormat);
-//                        if (!stopped) {
-                            // write the audio data to soundcard
-                            // o("<");
-                        dos.write(byteBuffer,0,n);
-                            // o(">");
-                            // update the state with this new buffer
-                            state.bufferWrittenToOutput();
-//                        }
-                    }
-                }
+			} catch (Throwable t) {
+				if (!closed) {
+					if (fatalExceptionListener != null) {
+						fatalExceptionListener.fatalExceptionOccured(t,
+								getName());
+					} else {
+						error(t);
+					}
+				}
+			}
+			if (TRACE) debug(getName() + ": exit.");
+			closed = true;
 
-                if (dos.size() > 0)
-                {
-                    // encoding in ogg format and send to the server
-                    dos.close();
-                    VorbisEncoder vorbisEncoder = new VorbisEncoder();
-                    vorbisEncoder.setFatalExceptionListener(fatalExceptionListener);
-                    vorbisEncoder.encode(tempFile, url, getFileName());
-                    audioPlayer.close();
-                }
-
-
-
-            }
-//            catch (InterruptedException ex) {
-//
-//            }
-            catch (Throwable t) {
-                if (!closed) {
-                    if (fatalExceptionListener != null) {
-                        fatalExceptionListener.fatalExceptionOccured(t,
-                                getName());
-                    } else {
-                        error(t);
-                    }
-                }
-            }
-            if (TRACE) debug(getName() + ": exit.");
-            closed = true;
-
-        }
-    }
-
-
-
-//    /** create the temporary float and byte buffers for reading */
-//    private void createOggBuffers() {
-//        // get the slice size in terms of the buffer size
-//        int sliceSizeSamples = getSliceSampleCount();
-//        // (line.getBufferSize() / getSlicesPerBuffer() /
-//        // line.getFormat().getFrameSize());
-//        int sliceSizeBytes = sliceSizeSamples * format.getFrameSize();
-//        // sliceSizeSamples * line.getFormat().getFrameSize();
-//        if (DEBUG) {
-//            debug(": slice time: " + sliceSizeBytes
-//                    + " bytes = "
-//                    + AudioUtils.bytes2MillisD(sliceSizeBytes, format)
-//                    + "ms");
-//        }
-//        // calculate number of samples
-//        floatBuffer = new FloatSampleBuffer(format.getChannels(),
-//                sliceSizeSamples, format.getSampleRate());
-//        byteBuffer = new byte[sliceSizeBytes];
-//    }
-
-//    private String getFileName()
-//    {
-//
-//        StringBuilder sb = new StringBuilder();
-//        List<AudioFile> fileList = player.getFactory().getAudioFiles();
-//
-//
-//
-//        for (AudioFile file: fileList) {
-//            String filename = file.getName();
-//             if (filename.endsWith(".ogg"))
-//             {
-//                filename = filename.substring(0, filename.length() -4);
-//             }
-//            sb.append(filename);
-//            sb.append(".");
-//        }
-//
-//        sb.append("ogg");
-//        return sb.toString();
-//    }
-
-
+		}
+	}
 
 }

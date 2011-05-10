@@ -131,26 +131,31 @@ public class AudioFileRenamer implements FatalExceptionListener, AudioListener {
 		out(t.getMessage());
 	}
 
+	//TODO: remove
     public void showMessage(String title, String context)
     {
         
     }
 
+	//TODO: remove
     public void showProgressDialog()
     {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
+	//TODO: remove
     public void hideProgressDialog()
     {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
+	//TODO: remove
     public void setSuccess() // uploading is success
     {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
+	//TODO: remove
     public void setFailed() // uploading is failed
     {
         //To change body of implemented methods use File | Settings | File Templates.

@@ -126,21 +126,11 @@ public class Debug {
 		JOptionPane.showMessageDialog(parent, text, title,
 				JOptionPane.ERROR_MESSAGE);
 	}
-    /**
-     * Display an error message to the user
-     */
-    public static void displayMessageDialog(Component parent, String title,
-            String text) {
-        JOptionPane.showMessageDialog(parent, text, title,
-                JOptionPane.ERROR_MESSAGE);
-    }
 
     public static void displayInfoMessageDialog(Component parent, String title,
             String text) {
         JOptionPane.showMessageDialog(parent, text, title,
                 JOptionPane.INFORMATION_MESSAGE);
-
-       
     }
 
 

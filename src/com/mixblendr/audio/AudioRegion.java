@@ -415,10 +415,4 @@ public class AudioRegion extends AutomationObject implements
 				+ "s" + " in " + af;
 	}
 
-
-    public double getStartTimeSec()
-    {
-        return getState().sample2seconds(getStartTimeSamples());
-    }
-
 }

@@ -561,10 +561,4 @@ public class AudioTrack {
 		return "Track " + index;
 	}
 
-
-    public double getStartTime()
-    {
-        return playlist.getStartTime();
-    }
-
 }

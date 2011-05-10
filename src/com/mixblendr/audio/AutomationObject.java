@@ -117,6 +117,13 @@ public abstract class AutomationObject {
 	}
 
 	/**
+	 * get the start time of this region in seconds
+	 */
+	public double getStartTimeSeconds() {
+		return state.sample2seconds(startTime);
+	}
+
+	/**
 	 * Set a new time when this automation object is executed. It will
 	 * automatically notify its owner playlist of the new position.
 	 * 
