@@ -25,8 +25,6 @@ import com.mixblendr.audio.AudioState;
 import com.mixblendr.skin.*;
 
 import static com.mixblendr.util.Debug.*;
-import com.mixblendr.util.Debug;
-import com.mixblendr.util.Utils;
 
 /**
  * The class managing the buttons in the mixblendr GUI. Most actions are done

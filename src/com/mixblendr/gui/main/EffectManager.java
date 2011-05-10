@@ -22,7 +22,7 @@ import com.mixblendr.util.Debug;
  * 
  * @author Florian Bomers
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class EffectManager {
 
 	public static final String EFFECT_NONE = "<no effect>";

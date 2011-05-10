@@ -22,7 +22,7 @@ import static com.mixblendr.util.Debug.*;
 // "defer" for getImage().
 // TODO: use a image manager factory method to return the same instance of
 // ImageManager if the same base Path is given
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 public class ImageManager {
 	private static final boolean TRACE = false;
 

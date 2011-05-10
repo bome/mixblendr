@@ -10,7 +10,7 @@ import java.util.HashMap;
  * 
  * @author Florian Bomers
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 public class AutomationManager {
 
 	static HashMap<Class, AutomationHandler> types = new HashMap<Class, AutomationHandler>();

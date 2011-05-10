@@ -11,8 +11,6 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 
 import javax.swing.*;
 
@@ -65,7 +63,6 @@ public class Main implements FatalExceptionListener, AutomationListener,
 	AutomationHandler volAutoHandler;
 	AutomationHandler panAutoHandler;
 
-    private ProgressMonitor progressMonitor = null;
     public boolean isSaving = false;
 
     public JDialog publishingDialog =null;
@@ -935,12 +932,8 @@ public class Main implements FatalExceptionListener, AutomationListener,
     }
 
     public void  showProgressDialog() {
-        String message = "Saving file...plase wait";
-        String note ="Mixing tracks";
         String title = "Saving...";
         UIManager.put("ProgressMonitor.progressText", title);
-        int min = 0;
-        int max = 100;
 //        progressMonitor = new ProgressMonitor(masterPanel,message, note, min, max);
 
 //        JOptionPane pane;
@@ -970,8 +963,6 @@ public class Main implements FatalExceptionListener, AutomationListener,
                 JButton btnOK = new JButton("OK");
                 btnOK.setVisible(false);
 
-                JLabel empty = new JLabel("   ");
-                //panel.add(label);
                 panel.add(label,BorderLayout.CENTER,0);
                 panel.add(btnOK, BorderLayout.PAGE_END,1);
 

@@ -46,7 +46,7 @@ public class GUIBuilder {
 	 * @param skinDir the name of the dir containing the images and the skin
 	 *            definition file
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public GUIBuilder(Class imageLoadClass, String skinDir) throws Exception {
 		SkinFileReader sfr = new SkinFileReader();
 		imageManager = new ImageManager(imageLoadClass, skinDir);

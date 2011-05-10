@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mixblendr.util.FatalExceptionListener;
-import com.mixblendr.gui.main.Globals;
 import com.mixblendr.gui.main.Main;
 
 /**

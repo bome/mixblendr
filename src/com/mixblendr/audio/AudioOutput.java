@@ -434,6 +434,7 @@ public class AudioOutput {
 		}
 
 		/** return the flag if this thread should cease operation immediately. */
+		@SuppressWarnings("unused")
 		protected final boolean isClosed() {
 			return closed;
 		}
@@ -677,7 +678,7 @@ public class AudioOutput {
         private FloatSampleBuffer floatBuffer;
         private byte[] byteBuffer;
 
-        private boolean isSaveToFile = false;
+        //private boolean isSaveToFile = false;
         //private VorbisEncoder vorbisEncoder;
         private boolean loop = false;
         private long startPosition;
@@ -699,7 +700,7 @@ public class AudioOutput {
 
             }
             stopped = false;
-            doDrain = false;
+            //doDrain = false;
             //configChange = true;
 
             loop = audioPlayer.isLoopEnabled();
@@ -747,16 +748,18 @@ public class AudioOutput {
         }
 
         /** return the flag if this thread should cease operation immediately. */
-        protected final boolean isClosed() {
+        @SuppressWarnings("unused")
+		protected final boolean isClosed() {
             return closed;
         }
 
         /** call this method to pause this thread */
-        public void doResume() {
+        @SuppressWarnings("unused")
+		public void doResume() {
             //toFile();
 
             stopped = false;
-            doDrain = false;
+            //doDrain = false;
             //configChange = true;
 
             loop = audioPlayer.isLoopEnabled();
@@ -778,7 +781,7 @@ public class AudioOutput {
                 stopped = true;
                 //configChange = true;
             }
-            doDrain = false;
+            //doDrain = false;
             audioPlayer.setLoopEnabled(loop);
             System.out.println("stop saving");
 
@@ -800,7 +803,8 @@ public class AudioOutput {
         }
 
         /** call this method to terminate this thread */
-        public void doClose() {
+        @SuppressWarnings("unused")
+		public void doClose() {
             closed = true;
             doStop(true);
             try {
@@ -837,7 +841,7 @@ public class AudioOutput {
         }
 
         /** set to true in the run loop for a smooth stop */
-        private volatile boolean doDrain = false;
+        //private volatile boolean doDrain = false;
 
         /** set to true in the stop method for a smooth stop */
         private volatile boolean doFadeOut = false;
@@ -854,7 +858,7 @@ public class AudioOutput {
             //SourceDataLine localLine = null;
             FloatSampleInput localInput = input;
             //configChange = true;
-            boolean doFadeIn = false;
+            //boolean doFadeIn = false;
 
 
             try {

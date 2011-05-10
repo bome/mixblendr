@@ -19,7 +19,6 @@ import org.xiph.libvorbis.*;
 import org.xiph.libogg.*;
 import com.mixblendr.util.FatalExceptionListener;
 import static com.mixblendr.util.Debug.error;
-import static com.mixblendr.util.Debug.debug;
 
 public class VorbisEncoder {
 
@@ -51,7 +50,7 @@ public class VorbisEncoder {
      * @param fatalExceptionListener the fatalExceptionListener to set
      */
     void setFatalExceptionListener(FatalExceptionListener fatalExceptionListener) {
-        this.fatalExceptionListener = fatalExceptionListener;
+        VorbisEncoder.fatalExceptionListener = fatalExceptionListener;
     }
 
 
@@ -62,6 +61,7 @@ public class VorbisEncoder {
 	 * java -cp VorbisEncoder <Input File[.wav]> <Output File[.ogg]>
 	 * 
 	 */
+	@SuppressWarnings("cast")
 	public void encode( File tempFile, String url, String filename ) {
 		
 		// Output Java System Properties

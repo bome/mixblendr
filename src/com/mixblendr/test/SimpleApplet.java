@@ -36,7 +36,7 @@ import static com.mixblendr.util.GUIUtils.*;
  * 
  * @author Florian Bomers
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 public class SimpleApplet extends JApplet {
 
 	static void setDefaultUI() {

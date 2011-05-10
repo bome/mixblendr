@@ -16,7 +16,6 @@ import javax.swing.JTextField;
 public class MEdit extends JTextField implements MControl {
 
 	/** Create a new MPanel from the given delegate */
-	@SuppressWarnings("static-access")
 	public MEdit(ControlDelegate delegate) {
 		super("");
 		this.delegate = delegate;
