@@ -55,7 +55,7 @@ public class Globals implements ChangeListener {
 	private int allRegionsScrollX;
 	private int allRegionsScrollWidth;
 
-	private boolean isPublishDone = false;
+	private boolean publishing = false;
 
 	private String fileName;
 
@@ -325,10 +325,9 @@ public class Globals implements ChangeListener {
 	 * error, display a dialog with the error message.
 	 */
 	public void togglePlayback() {
-
 		if (player == null) return;
 
-		if (isPublishDone) return;
+		if (publishing) return;
 
 		if (player.isStarted()) {
 			stopPlayback();
@@ -338,64 +337,56 @@ public class Globals implements ChangeListener {
 	}
 
 	public void startSaveFile() {
-		if (isPublishDone) {
-			Debug.displayErrorDialogAsync(allRegionsViewPort, null,
-					"Publishing has been already done");
-		} else {
-			if (getPlayer().getOutput().isPlaying()) {
-				Debug.displayErrorDialogAsync(allRegionsViewPort, null,
-						"Can't publish a track during playing");
-				return;
-			}
-
-			if (player.getMixer().isEmpty()) {
-				Debug.displayErrorDialogAsync(allRegionsViewPort, null,
-						"Nothing to save");
-				return;
-			}
-
-			double minStartTime = player.getMixer().getStartTimeSeconds();
-			if (minStartTime > 60) {
-				Debug.displayErrorDialogAsync(
-						allRegionsViewPort,
-						null,
-						"Cannot find any audio for a period of 1 minute. To publish your track, please move it to the beginning of the timeline.");
-				return;
-			}
-
-			int dialogresult = JOptionPane.showConfirmDialog(
-					allRegionsViewPort,
-					"Are you sure you want to publish this track? You won't be able to make any further edits after you publish it.",
-					"Publishing track", JOptionPane.YES_NO_OPTION);
-			if (dialogresult == JOptionPane.YES_OPTION) {
-				String result = JOptionPane.showInputDialog(allRegionsViewPort,
-						"Please enter the name of the track", "my_track.ogg");
-				if (result != null && !result.equals("")) {
-
-					if (result.indexOf(".ogg") == -1) {
-						result += ".ogg";
-					}
-					getPlayer().getOutput().setFileName(result);
-
-					isPublishDone = true;
-
-					getPlayer().getOutput().close();
-
-					// player.setGlobals(this);
-					// player.getOutput().setSaving(true);
-					try {
-						player.start();
-					} catch (Exception e) {
-						Debug.displayErrorDialogAsync(allRegionsViewPort, e,
-								"Error when publishing");
-					}
-
-				}
-
-			}
-
+		if (publishing) {
+			Debug.displayInfoDialogAsync(allRegionsViewPort, null,
+					"This song is already published.");
+			return;
+		}
+		if (getPlayer().getOutput().isPlaying()) {
+			Debug.displayInfoDialogAsync(allRegionsViewPort, null,
+					"Cannot publish a track during playback.");
+			return;
 		}
 
+		if (player.getMixer().isEmpty()) {
+			Debug.displayInfoDialogAsync(allRegionsViewPort, null,
+					"Nothing to publish.");
+			return;
+		}
+
+		double minStartTime = player.getMixer().getStartTimeSeconds();
+		if (minStartTime > 60) {
+			Debug.displayInfoDialogAsync(allRegionsViewPort, null,
+					"Your song has at least 1 minute of silence at the beginning.<br>" +
+					"To publish your song, please move it to the beginning of the timeline.");
+			return;
+		}
+
+		int dialogresult = JOptionPane.showConfirmDialog(
+				allRegionsViewPort,
+				"Are you sure you want to publish this track?<br>" +
+				"You won't be able to make any further edits after you have published it.",
+				"Publishing track", JOptionPane.YES_NO_OPTION);
+		if (dialogresult == JOptionPane.YES_OPTION) {
+			String result = JOptionPane.showInputDialog(allRegionsViewPort,
+					"Please enter the name of the track", "my_track.ogg");
+			if (result != null && !result.equals("")) {
+
+				if (!result.endsWith(".ogg")) {
+					result += ".ogg";
+				}
+				getPlayer().getOutput().setFileName(result);
+				publishing = true;
+				// TODO: do not select publish mode by closing the audio output
+				getPlayer().getOutput().close();
+				try {
+					player.start();
+				} catch (Exception e) {
+					Debug.displayErrorDialogAsync(allRegionsViewPort, e,
+							"Error when publishing");
+				}
+			}
+		}
 	}
 
 	// autoscroll support for dragging and for the position grid

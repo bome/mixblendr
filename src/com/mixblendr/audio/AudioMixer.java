@@ -100,10 +100,10 @@ public class AudioMixer implements FloatSampleInput {
 		}
 		for (AudioTrack t : tracks) {
 			if (t.getPlaylist().getAudioRegionCount() > 0) {
-				return true;
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	/** get the start time, in seconds, of the first region in all tracks. */

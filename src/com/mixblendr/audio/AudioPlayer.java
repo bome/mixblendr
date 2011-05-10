@@ -29,7 +29,7 @@ public class AudioPlayer {
 
 	/**
 	 * Create an instance of AudioPlayer and create the state object. You must
-	 * call init() to intialize the AudioOutput, AudioMixer, AudioFileFactory
+	 * call init() to initialize the AudioOutput, AudioMixer, AudioFileFactory
 	 * classes.
 	 */
 	public AudioPlayer(FatalExceptionListener fel) {

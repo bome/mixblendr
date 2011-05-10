@@ -48,10 +48,29 @@ public class ImageManager {
 
 	public URL getImageURL(String filename) throws ImageNotFoundException {
 		if (baseURL == null) {
+			String origBasePath = basePath;
 			String path = basePath + '/' + filename;
 			baseURL = resourceClass.getResource(path);
+			if (baseURL == null && basePath.length() > 0 && basePath.charAt(0) == '/') {
+				// try non-absolute path
+				basePath = basePath.substring(1);
+				path = basePath + '/' + filename;
+				baseURL = resourceClass.getResource(path);
+			}
 			if (baseURL == null) {
-				throw new ImageNotFoundException("cannot find " + path);
+				// try parent dirs
+				for (int i = 0; i < 7; i++) {
+					basePath = "../" + basePath;
+					path = basePath + '/' + filename;
+					baseURL = resourceClass.getResource(path);
+					if (baseURL != null) {
+						break;
+					}
+				}
+			}
+			if (baseURL == null) {
+				basePath = origBasePath;
+				throw new ImageNotFoundException("cannot find " + basePath);
 			}
 			if (TRACE) debug("ImageManager: baseURL=" + baseURL);
 		}

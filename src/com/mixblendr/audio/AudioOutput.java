@@ -78,7 +78,7 @@ public class AudioOutput {
 	// TODO: move to Publish class, rename methods
 
 	private String url;
-	private boolean isPublishDone = false;
+	private boolean publishing = false;
 
 	private String fileName = "";
 
@@ -277,10 +277,11 @@ public class AudioOutput {
 				started = true;
 			}
 		} else {
-			if (!started && !isPublishDone) {
+			// TODO: different way to select publishing mode
+			if (!started && !publishing) {
 				saveThread = new SaveThread();
 				saveThread.start();
-				isPublishDone = true;
+				publishing = true;
 				started = true;
 				if (fatalExceptionListener != null) {
 					fatalExceptionListener.showProgressDialog();
@@ -588,7 +589,6 @@ public class AudioOutput {
 										+ " waiting for start");
 							}
 							synchronized (this) {
-								debug("wait");
 								wait();
 							}
 							if (TRACE) debug(getName() + ": woke up");

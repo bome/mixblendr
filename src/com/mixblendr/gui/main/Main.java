@@ -33,7 +33,7 @@ import com.mixblendr.util.FatalExceptionListener;
 public class Main implements FatalExceptionListener, AutomationListener,
 		MPanel.PaintListener, KeyListener, AudioListener, ActionListener {
 
-	public final static String VERSION = "0.19";
+	public final static String VERSION = "0.20";
 	public final static String NAME = "Mixblendr";
 	public final static String SKIN = "/skins/main";
 
