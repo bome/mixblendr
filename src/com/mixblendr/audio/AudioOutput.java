@@ -1,5 +1,10 @@
 package com.mixblendr.audio;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
 import javax.sound.sampled.*;
 import org.tritonus.share.sampled.*;
 import com.mixblendr.util.*;
@@ -7,7 +12,6 @@ import static com.mixblendr.util.Debug.*;
 
 import java.io.File;
 import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 
 /**
  * Class for writing audio data to a soundcard.
@@ -18,8 +22,9 @@ public class AudioOutput {
 
 	private final static boolean TRACE = false;
 	private final static boolean DEBUG = false;
-
-	/** for debugging only: use java sound audio engein (if it exists) */
+	private final static boolean DEBUG_WRITE_TO_FILE = false;
+	 
+	/** for debugging only: use java sound audio engine (if it exists) */
 	private static final boolean FORCE_JAVA_SOUND_AUDIO_ENGINE = false;
 
 	/** the stream from which data is read */
@@ -535,6 +540,12 @@ public class AudioOutput {
 			FloatSampleInput localInput = input;
 			configChange = true;
 			boolean doFadeIn = false;
+			OutputStream debugOut = null;
+			if (DEBUG_WRITE_TO_FILE) {
+				try {
+					debugOut = new FileOutputStream("mixblendr.pcm");
+				} catch (FileNotFoundException fnfe) {}
+			}
 			try {
 				while (!closed) {
 					if (stopped || configChange) {
@@ -611,9 +622,7 @@ public class AudioOutput {
 					} else if (localLine != null) {
 						// read from the input line
 						if (localInput != null) {
-							// o("+");
 							localInput.read(floatBuffer);
-							// o("-");
 							if (doFadeIn) {
 								floatBuffer.linearFade(0, 1);
 								if (TRACE)
@@ -636,9 +645,10 @@ public class AudioOutput {
 							if (!localLine.isRunning()) {
 								localLine.start();
 							}
-							// o("<");
-							localLine.write(byteBuffer, 0, n);
-							// o(">");
+ 							localLine.write(byteBuffer, 0, n);
+							if (debugOut != null) {
+								debugOut.write(byteBuffer, 0, n);
+							}
 							// update the state with this new buffer
 							state.bufferWrittenToOutput();
 						}
@@ -657,6 +667,11 @@ public class AudioOutput {
 			}
 			if (TRACE) debug(getName() + ": exit.");
 			closed = true;
+			if (debugOut!=null) {
+				try {
+					debugOut.close();
+				} catch (IOException ioe) {}
+			}
             isPlaying = false;
         }
 	}

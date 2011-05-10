@@ -7,7 +7,9 @@ import static com.mixblendr.util.Debug.debug;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.io.File;
 import java.net.URL;
+import java.util.List;
 
 /**
  * A utility class used by the track panel for drag'n'drop of regions.
@@ -79,16 +81,28 @@ class RegionDragTool {
 	 * Return the URL from this transferable. Make sure that getTransferType
 	 * returned T_URL! Returns null if there is no valid URL.
 	 */
+ 	@SuppressWarnings("unchecked")
 	public static URL getURL(Transferable t) {
-		try {
-			Object td = t.getTransferData(urlFlavor);
-			if (td != null && td instanceof URL) {
-				if (DEBUG) {
-					debug("getURL: directly got this URL:" + td);
+ 		try {
+			if (t.isDataFlavorSupported(urlFlavor)) {
+				Object td = t.getTransferData(urlFlavor);
+				if (td != null && (td instanceof URL)) {
+					if (DEBUG) {
+						debug("getURL: directly got this URL:" + td);
+					}
+					return (URL) td;
+ 				}
+			} else if (t.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+				Object fl = t.getTransferData(DataFlavor.javaFileListFlavor);
+				if (fl instanceof List<?>) {
+					List<File> l = (List<File>) fl;
+					if (l.size() > 0) {
+						String f = l.get(0).getAbsolutePath().replace('\\', '/');
+						return new URL("file:///"+f);
+					}
 				}
-				return (URL) td;
-			}
-		} catch (Exception e) {
+ 			}
+ 		} catch (Exception e) {
 			debug(e);
 			if (DEBUG) e.printStackTrace();
 		}

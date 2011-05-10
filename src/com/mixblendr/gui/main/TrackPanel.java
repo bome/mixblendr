@@ -677,6 +677,10 @@ public class TrackPanel extends JComponent implements GraphScale.Listener,
 		dragSampleCount = 0;
 		dragOffsetX = 0;
 		switch (dragType) {
+		case T_FILE:
+			// emulate URL
+			dragType = T_URL; 
+			//$FALL-THROUGH$
 		case T_URL:
 			// need to call acceptDrag before being able to get the data?
 			e.acceptDrag(DnDConstants.ACTION_COPY);

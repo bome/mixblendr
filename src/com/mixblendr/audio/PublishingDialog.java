@@ -20,7 +20,7 @@ public class PublishingDialog extends JDialog implements ActionListener
         final JOptionPane optionPane = new JOptionPane(
                         "Uploading... Please wait",
                         JOptionPane.INFORMATION_MESSAGE);
-
+        setContentPane(optionPane);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         setBounds((int)r.getCenterX(),(int)r.getCenterY(), 300,200);
         pack();
