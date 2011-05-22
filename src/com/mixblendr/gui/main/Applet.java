@@ -19,6 +19,15 @@ public class Applet extends JApplet {
 
 	protected Exception exception;
 
+	@Override
+	public String getParameter(String arg) {
+		String ret = super.getParameter(arg);
+		if (ret == null) {
+			return "";
+		}
+		return ret;
+	}
+	
 	/**
 	 * Method called by browser before display of the applet.
 	 */
@@ -49,8 +58,8 @@ public class Applet extends JApplet {
             main.setDefaultTempo(tempo);
             main.createGUI();
 			main.createEngine();
-            main.setUrl(url);
-            main.setRedirectUrl(redirectURL);
+            main.getProgressDialog().setSaveToServerScriptURL(url);
+            main.setRedirectAfterPublishURL(redirectURL);
             main.setApplet(this);
 
 

@@ -15,7 +15,7 @@ public class AutomationManager {
 
 	static HashMap<Class, AutomationHandler> types = new HashMap<Class, AutomationHandler>();
 
-	/** prevent instanciation */
+	/** prevent instantiation */
 	private AutomationManager() {
 		// nothing
 	}

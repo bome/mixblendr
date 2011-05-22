@@ -71,7 +71,7 @@ public class Playlist implements AudioInput {
 	 * old one is overwritten.
 	 */
 	public synchronized void addObject(AutomationObject ao) {
-		ao.owner = this;
+		ao.setOwner(this);
 		int i = 0;
 		int c = elements.size();
 		long aost = ao.getStartTimeSamples();
@@ -275,11 +275,8 @@ public class Playlist implements AudioInput {
 	 */
 	private void onRemoval(AutomationObject ao) {
 		if (ao == null) return;
-		if (ao.owner == this) {
-			ao.owner = null;
-			if (ao instanceof AudioRegion) {
-				((AudioRegion) ao).close();
-			}
+		if (ao.getOwner() == this) {
+			ao.setOwner(null);
 		}
 	}
 
@@ -325,16 +322,27 @@ public class Playlist implements AudioInput {
 	 * Get the duration of this track. This may change depending on the
 	 * availability of currently downloaded media
 	 */
-	public long getDurationSamples() {
-		if (elements.size() == 0) {
+	public synchronized long getDurationSamples() {
+		final int c = elements.size();
+		if (c == 0) {
 			return 0;
 		}
-		AutomationObject ao = elements.get(elements.size() - 1);
-		if (ao instanceof AudioRegion) {
-			return ao.getStartTimeSamples()
+		// need to use the last automation object's time, 
+		// or the last region's end time, whichever is larger
+		long lastPos = elements.get(c-1).getStartTimeSamples();
+		for (int i = c - 1; i >= 0; i--) {
+			AutomationObject ao = elements.get(i);
+			if (ao instanceof AudioRegion) {
+				long endPos = ao.getStartTimeSamples()
 					+ ((AudioRegion) ao).getAvailableSamples();
+				if (endPos > lastPos) {
+					lastPos = endPos;
+				}
+				// once an audio region is found, we can stop iterating
+				break;
+			}
 		}
-		return ao.getStartTimeSamples();
+		return lastPos;
 	}
 
 	/**
@@ -353,7 +361,7 @@ public class Playlist implements AudioInput {
 	 * that it can be sorted again into the list of objects
 	 */
 	synchronized void automationObjectStartChanged(AutomationObject ao) {
-		assert (ao.owner == this);
+		assert (ao.getOwner() == this);
 		if (!(ao instanceof AudioRegion) && nextSamplePos >= 0) {
 			// prevent re-initialization
 			int index = indexOf(ao);
@@ -506,7 +514,7 @@ public class Playlist implements AudioInput {
 				AutomationObject last = ah.getLastChasingObject();
 				if (last != null
 				// sanity
-						&& last.owner == this) {
+						&& last.getOwner() == this) {
 					last.execute(owner);
 					ah.setLastChasingObject(null);
 				}

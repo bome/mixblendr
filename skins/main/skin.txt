@@ -231,14 +231,13 @@ tooltip=displays the loop points - when you reach the second point, playback sta
 [label.loopOnOff]
 525,472,67,11
 
-# save button
-[button.save]
+# publish button
+[button.publish]
 596,449,89,42
 normal=MIXBLENDR_special.png,352,449
 hover=MIXBLENDR_special.png,352,449
 down=MIXBLENDR_special.png,352,449
-tooltip=save the song
-
+tooltip=publish the song
 
 ############# POSITION GRID
 [knob.position]

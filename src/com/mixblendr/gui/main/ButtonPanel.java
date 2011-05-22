@@ -8,12 +8,7 @@ import java.awt.Component;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 
 import javax.swing.JViewport;
 import javax.swing.SwingConstants;
@@ -58,7 +53,7 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 	MToggle scissorTool;
 	MButton rewind;
 	MButton play;
-	MButton save;
+	MButton publish;
 	MButton fastForward;
 	MToggle loop;
 
@@ -87,7 +82,7 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 		scissorTool = getToggle(builder, "scissor");
 		rewind = getButton(builder, "rewind");
 		play = getButton(builder, "play");
-		save = getButton(builder, "save");
+		publish = getButton(builder, "publish", true);
 		fastForward = getButton(builder, "fastForward");
 		loop = getToggle(builder, "loop");
 
@@ -167,11 +162,21 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 	 * @return the button, or null if it does not exist
 	 */
 	private MButton getButton(GUIBuilder builder, String name) {
+		return getButton(builder, name, false);
+	}
+
+	/**
+	 * Get the named button and register its ActionListener
+	 * 
+	 * @param name the name of the button, without the type
+	 * @return the button, or null if it does not exist
+	 */
+	private MButton getButton(GUIBuilder builder, String name, boolean optional) {
 		MButton ctrl = (MButton) builder.getControl("button." + name);
 		if (ctrl != null) {
 			ctrl.addActionListener(this);
 		}
-		if (DEBUG && ctrl == null && name.indexOf("test") < 0) {
+		if (DEBUG && ctrl == null && name.indexOf("test") < 0 && !optional) {
 			debug("Cannot find GUI definition for button." + name);
 		}
 		return ctrl;
@@ -254,6 +259,7 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 	 */
 	public void actionPerformed(ActionEvent e) {
 		Object src = e.getSource();
+		boolean ctrl = (e.getModifiers() & ActionEvent.CTRL_MASK) != 0;
 		if (src == snap) {
 			onSnap();
 		} else if (src == guiTimer) {
@@ -272,8 +278,8 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 			onWindToMeasure(false);
 		} else if (src == play) {
 			onPlay();
-		} else if (src == save) {
-			onSave();
+		} else if (src == publish) {
+			onPublish(!ctrl);
 		} else if (src == fastForward) {
 			onWindToMeasure(true);
 		} else if (src == loop) {
@@ -322,6 +328,10 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 				loopOnOff.setText("LOOP OFF");
 			}
 		}
+	}
+	
+	public void displayLoopButton() {
+		loop.setSelected(getGlobals().getState().isLoopEnabled(), false);
 	}
 
 	private double oldTempo;
@@ -610,10 +620,10 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 		getGlobals().togglePlayback();
 	}
 
-	/** action upon pressing the Save button */
-	public void onSave() {
-		// will trigger call onPlaybackStart or onPlaybackStop
-		getGlobals().startSaveFile();
+	/** action upon pressing the Publish button */
+	public void onPublish(boolean toWeb) {
+		Publish p = new Publish(getGlobals());
+		p.publish(toWeb);
 	}
 
 	/**

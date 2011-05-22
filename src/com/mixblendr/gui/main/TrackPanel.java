@@ -473,10 +473,13 @@ public class TrackPanel extends JComponent implements GraphScale.Listener,
 
 	@Override
 	public Dimension getPreferredSize() {
+		int graphWidth = getGraphWidth();
+		int loopWidth = globals.getState().isLoopEnabled()?scale.sample2pixel(globals.getState().getLoopEndSamples()):0;
+		int w = graphWidth>loopWidth?graphWidth:loopWidth;
 		if (DEBUG) {
-			Debug.debug("TrackPanel.getPreferredWidth=" + getGraphWidth());
+			Debug.debug("TrackPanel.getPreferredWidth=" + w);
 		}
-		return new Dimension(getGraphWidth(), fixedHeight);
+		return new Dimension(w, fixedHeight);
 	}
 
 	@Override

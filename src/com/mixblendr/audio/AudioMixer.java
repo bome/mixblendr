@@ -6,11 +6,11 @@ package com.mixblendr.audio;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.tritonus.share.sampled.FloatSampleBuffer;
 import org.tritonus.share.sampled.FloatSampleInput;
 
 import com.mixblendr.audio.AudioTrack.SoloState;
+
 import static com.mixblendr.util.Debug.*;
 
 /**
@@ -47,7 +47,7 @@ public class AudioMixer implements FloatSampleInput {
 	/**
 	 * @return the number of tracks
 	 */
-	public int getTrackCount() {
+	public final int getTrackCount() {
 		return tracks.size();
 	}
 
@@ -58,7 +58,7 @@ public class AudioMixer implements FloatSampleInput {
 	 * @return the track at the specified index, or null if index is out of
 	 *         range
 	 */
-	public AudioTrack getTrack(int index) {
+	public final AudioTrack getTrack(int index) {
 		if (index < 0 || index >= tracks.size()) {
 			return null;
 		}
@@ -71,7 +71,7 @@ public class AudioMixer implements FloatSampleInput {
 	 * @param at the track to get the index
 	 * @return the index of the track, or -1 if the track is not found
 	 */
-	public int getTrackIndex(AudioTrack at) {
+	public final int getTrackIndex(AudioTrack at) {
 		return tracks.indexOf(at);
 	}
 
@@ -92,7 +92,8 @@ public class AudioMixer implements FloatSampleInput {
 	}
 
 	/**
-	 * @return true if no tracks or only empty tracks are loaded
+	 * @return true if no tracks or only empty tracks are loaded. automation
+	 *         data is not considered, only audio regions.
 	 */
 	public synchronized boolean isEmpty() {
 		if (tracks.size() == 0) {
@@ -104,6 +105,18 @@ public class AudioMixer implements FloatSampleInput {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @return the number of samples of the longest track. Also automation data
+	 *         can extend the duration.
+	 */
+	public synchronized long getDurationSamples() {
+		long res = 0;
+		for (AudioTrack t : tracks) {
+			res += t.getPlaylist().getDurationSamples();
+		}
+		return res;
 	}
 
 	/** get the start time, in seconds, of the first region in all tracks. */
@@ -163,7 +176,7 @@ public class AudioMixer implements FloatSampleInput {
 	}
 
 	/**
-	 * @return a non-modifyable view of the list of tracks
+	 * @return a non-modifiable view of the list of tracks
 	 */
 	public synchronized List<AudioTrack> getTracks() {
 		return Collections.unmodifiableList(tracks);
@@ -224,10 +237,12 @@ public class AudioMixer implements FloatSampleInput {
 	 * will override the mute state.
 	 * 
 	 * @param isSolo if true, set this track to solo, otherwise remove the solo
-	 *            flag
+	 *        flag
 	 */
 	public void setSolo(AudioTrack track, boolean isSolo) {
-		track.setSoloImpl(isSolo ? SoloState.SOLO : SoloState.NONE);
+		if (track != null) {
+			track.setSoloImpl(isSolo ? SoloState.SOLO : SoloState.NONE);
+		}
 		updateSoloState();
 	}
 
@@ -237,7 +252,7 @@ public class AudioMixer implements FloatSampleInput {
 	 * 
 	 * @param trackIndex the index of the track to change solo state
 	 * @param isSolo if true, set this track to solo, otherwise remove the solo
-	 *            flag
+	 *        flag
 	 */
 	public void setSolo(int trackIndex, boolean isSolo) {
 		setSolo(getTrack(trackIndex), isSolo);
@@ -505,8 +520,9 @@ public class AudioMixer implements FloatSampleInput {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see org.tritonus.share.sampled.FloatSampleInput#read(org.tritonus.share.sampled.FloatSampleBuffer)
+	 * @see
+	 * org.tritonus.share.sampled.FloatSampleInput#read(org.tritonus.share.sampled
+	 * .FloatSampleBuffer)
 	 */
 	public void read(FloatSampleBuffer buffer) {
 		read(buffer, 0, buffer.getSampleCount());

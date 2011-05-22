@@ -20,19 +20,4 @@ public interface FatalExceptionListener {
 	/** called upon a fatal exception */
 	public void fatalExceptionOccured(Throwable t, String context);
 
-	// TODO: remove
-	public void showMessage(String title, String context);
-
-	// TODO: remove
-	public void showProgressDialog();
-
-	// TODO: remove
-	public void hideProgressDialog();
-
-	// TODO: removeSimpleAppl
-	public void setSuccess(); // uploading is success
-	// TODO: remove
-
-	public void setFailed(); // uploading is failed
-
 }

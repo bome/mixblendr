@@ -26,7 +26,6 @@ public abstract class GUIEffectsBase extends JFrame implements AudioEffect,
 
 	// engine
 	protected AudioState state;
-	protected AudioPlayer player;
 	protected AudioTrack track;
 
 	// GUI
@@ -56,13 +55,11 @@ public abstract class GUIEffectsBase extends JFrame implements AudioEffect,
 	 * initImpl().
 	 * 
 	 * @see com.mixblendr.audio.AudioEffect#init(com.mixblendr.audio.AudioState,
-	 *      com.mixblendr.audio.AudioPlayer, com.mixblendr.audio.AudioTrack)
+	 *      com.mixblendr.audio.AudioTrack)
 	 */
-	public final void init(AudioState aState, AudioPlayer aPlayer,
-			AudioTrack aTrack) {
+	public final void init(AudioState aState, AudioTrack aTrack) {
 		synchronized (lock) {
 			this.state = aState;
-			this.player = aPlayer;
 			this.track = aTrack;
 			initImpl();
 		}
@@ -85,7 +82,6 @@ public abstract class GUIEffectsBase extends JFrame implements AudioEffect,
 		synchronized (lock) {
 			exitImpl();
 			// free references
-			this.player = null;
 			this.track = null;
 			this.state = null;
 			guiInited = false;
@@ -106,6 +102,10 @@ public abstract class GUIEffectsBase extends JFrame implements AudioEffect,
 	 */
 	public String getShortName() {
 		return super.getTitle();
+	}
+
+	protected void setShortName(String shortName) {
+		super.setTitle(shortName);
 	}
 
 	/*

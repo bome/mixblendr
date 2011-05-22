@@ -55,7 +55,7 @@ public class MToggle extends MButton {
 			this.selected = selected;
 			updateDelegateDown();
 			if (sendEvent) {
-				fireActionEvent();
+				fireActionEvent(0);
 			}
 		}
 	}

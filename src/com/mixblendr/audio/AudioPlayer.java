@@ -56,7 +56,7 @@ public class AudioPlayer {
 	 * classes.
 	 */
 	public void init() {
-		output = new AudioOutput(this, state);
+		output = new AudioOutput(state);
 		mixer = new AudioMixer(state);
 		output.setInput(mixer);
 		output.setFatalExceptionListener(fel);
@@ -90,6 +90,13 @@ public class AudioPlayer {
 		return state;
 	}
 
+	/**
+	 * @return the fatal exception listener
+	 */
+	public FatalExceptionListener getFatalExceptionListener() {
+		return fel;
+	}
+
 	/** register the specified listener to receive player events */
 	public void addListener(Listener l) {
 		if (l != null) {
@@ -102,9 +109,6 @@ public class AudioPlayer {
 		listeners.remove(l);
 	}
 
-	/** the static lag from writing to audio device to when it's heard */
-	private long audioSampleLag = 0;
-
 	/**
 	 * start playback. If INHIBIT_PLAYBACK_DURING_DOWNLOAD is true, it is not
 	 * started if there is any download in progress.
@@ -116,9 +120,9 @@ public class AudioPlayer {
 				return;
 			}
 			// reset calculation for interpolating the sample position
-			state.knownSampleSystemTime = -1;
+			state.resetSamplePositionInterpolation();
 			output.start();
-			audioSampleLag = output.getSampleLag();
+			state.audioSampleLag = output.getSampleLag();
 			for (Listener l : listeners) {
 				l.onPlaybackStart(this);
 			}
@@ -128,9 +132,7 @@ public class AudioPlayer {
 	/** pause playback */
 	public void stop(boolean immediate) {
 		if (isStarted()) {
-			// TODO: correct relaying of the "iommediate" flag
-			// output.stop(immediate);
-			output.stop(true);
+			output.stop(immediate);
 			flushPeakCaches();
 			for (Listener l : listeners) {
 				l.onPlaybackStop(this, immediate);
@@ -163,7 +165,7 @@ public class AudioPlayer {
 	}
 
 	public boolean isStarted() {
-		return output.isStarted();
+		return state.isStarted();
 	}
 
 	/** flush the peak arrays of all tracks */
@@ -187,28 +189,13 @@ public class AudioPlayer {
 		}
 	}
 
-	/**
-	 * return an interpolated exact position in samples. It uses the last sample
-	 * slice time and calculates the time difference using System.nanoTime().
-	 */
-	private final long getSamplePlaybackPosition() {
-		if (state.knownSampleSlicePos < 0 || !isStarted()) {
-			return state.getSampleSlicePosition();
-		}
-		long ret = state.getSampleSystemTime() - state.knownSampleSystemTime
-				+ state.knownSampleSlicePos - audioSampleLag;
-		if (ret < 0) {
-			return 0;
-		}
-		return ret;
-	}
 
 	/** return the current playback position, as accurate as possible */
 	public long getPositionSamples() {
 		// this is inaccurate!
 		// return state.getSampleSlicePosition();
 		// use interpolated position
-		return getSamplePlaybackPosition();
+		return state.getSamplePosition();
 	}
 
 	/**

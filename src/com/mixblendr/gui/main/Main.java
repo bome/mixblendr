@@ -7,8 +7,8 @@ import static com.mixblendr.util.Debug.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,9 +31,9 @@ import com.mixblendr.util.FatalExceptionListener;
  * @author Florian Bomers
  */
 public class Main implements FatalExceptionListener, AutomationListener,
-		MPanel.PaintListener, KeyListener, AudioListener, ActionListener {
+		MPanel.PaintListener, KeyListener, AudioListener, ProgressDialog.Listener {
 
-	public final static String VERSION = "0.20";
+	public final static String VERSION = "0.22";
 	public final static String NAME = "Mixblendr";
 	public final static String SKIN = "/skins/main";
 
@@ -59,14 +59,11 @@ public class Main implements FatalExceptionListener, AutomationListener,
 
 	private AudioPlayer player;
 	private Globals globals;
+	// these global automation handlers are used in ChannelStrip
 	AutomationHandler volAutoHandler;
 	AutomationHandler panAutoHandler;
 
-	public boolean isSaving = false;
-
-	public JDialog publishingDialog = null;
-	public boolean isPublishing = false;
-	private boolean isPublishSuccess = false;
+	private String redirectAfterPublishURL = "";
 
 	//TODO: use a nicer way to access applet
 	private Applet applet;
@@ -240,6 +237,7 @@ public class Main implements FatalExceptionListener, AutomationListener,
 			globals.getPlayer().setLoopSamples(0,
 					state.beat2sample(4 * state.getBeatsPerMeasure()));
 			updateTracks();
+			getProgressDialog().addListener(this);
 			inited = true;
 		}
 	}
@@ -253,6 +251,8 @@ public class Main implements FatalExceptionListener, AutomationListener,
 	 * Remove all dependencies, stop audio engine, etc.
 	 */
 	protected void close() {
+		getProgressDialog().cancel();
+		getProgressDialog().removeListener(this);
 		effectManager.close();
 		for (ChannelStrip s : strips) {
 			s.close();
@@ -318,7 +318,15 @@ public class Main implements FatalExceptionListener, AutomationListener,
 	}
 
 	/**
-	 * @return the masterPanel
+	 * settings this URL will cause this applet (if in an applet) to redirect to
+	 * this URL after successful publishing
+	 */
+	public void setRedirectAfterPublishURL(String redirectUrl) {
+		this.redirectAfterPublishURL = redirectUrl;
+	}
+	
+	/**
+	 * @return the masterPanel, the entire window
 	 */
 	public MPanel getMasterPanel() {
 		return masterPanel;
@@ -332,12 +340,28 @@ public class Main implements FatalExceptionListener, AutomationListener,
 	}
 
 	/**
-	 * @return the workarea
+	 * @return the workarea, the area with the channel strips and the tracks
 	 */
 	public MPanel getWorkarea() {
 		return workarea;
 	}
+	
+	/** return the progress dialog (which is owned by the Globals class) */
+	public ProgressDialog getProgressDialog() {
+		return globals.getProgressDialog();
+	}
 
+	/**
+	 * Update all visible elements from the engine: tracks, regions, position
+	 * grid, loop mode, tempo display. This should be called after loading a file.
+	 */
+	public void updateAll() {
+		updateTracks();
+		buttonPanel.displayModeChanged();
+		buttonPanel.displayLoop(true);
+		buttonPanel.displayLoopButton();
+	}
+	
 	/**
 	 * update the channel strips and region areas to hold all tracks. If not in
 	 * swing thread, do it asynchronously.
@@ -679,6 +703,7 @@ public class Main implements FatalExceptionListener, AutomationListener,
 		System.out.println("Start " + Main.NAME + " " + Main.VERSION);
 		Performance.setDefaultUI();
 		Performance.preload();
+		final String arg0 = (args.length > 0)?args[0]:"";
 		// Schedule a job for the event-dispatching thread:
 		// creating and showing this application's GUI.
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -704,6 +729,11 @@ public class Main implements FatalExceptionListener, AutomationListener,
 					// Display the window.
 					frame.pack();
 					frame.setVisible(true);
+					if (arg0.equals("/florian")) {
+						main.loadDefaultSong();
+						main.getProgressDialog().setSaveToServerScriptURL("http://www.12fb.com/florian/nervesound/getfile.php");
+						main.getProgressDialog().setLoadFromServerURL("http://www.12fb.com/florian/nervesound/uploads/");
+					}
 				} catch (Exception e) {
 					error(e);
 					System.exit(1);
@@ -738,7 +768,7 @@ public class Main implements FatalExceptionListener, AutomationListener,
 	/** called by the ButtonPanel upon the display timer */
 	void handleNewPlaybackPosition(long newSamplePosition) {
 		if (globals != null && !globals.isDraggingMouse() && player != null) {
-			if (player.isStarted()) {
+			if (player.isStarted() || getProgressDialog().isInProgress()) {
 				// if during playback, approaching the right border, scroll
 				int x = globals.getScale().sample2pixel(newSamplePosition);
 				int allX = globals.getAllRegionsScrollX();
@@ -747,7 +777,7 @@ public class Main implements FatalExceptionListener, AutomationListener,
 					// set new x position of the viewport
 					int newX = x - PLAYBACK_SCROLL_THRESHOLD_PIXELS;
 					int lastPixel = globals.getAllRegionsViewPort().getView().getWidth();
-					if (x > lastPixel) {
+					if (x > lastPixel && !globals.isPublishing()) {
 						// stop playback
 						globals.stopPlayback();
 					}
@@ -917,165 +947,53 @@ public class Main implements FatalExceptionListener, AutomationListener,
 		eventDispatched(e);
 	}
 
-	// TODO: move all the below to an own class "Publisher" or so
-
-	// TODO: rename to "setPublishURL()" or so
-	public void setUrl(String url) {
-		player.getOutput().setUrl(url);
+	/* (non-Javadoc)
+	 * @see com.mixblendr.gui.main.Publisher.Listener#onPublishingStart()
+	 */
+	public void onProgressStart() {
+		// ignored
 	}
 
-	// TODO: what is the redirectURL used for?
-	private String redirectUrl;
-
-	public void setRedirectUrl(String redirectUrl) {
-		this.redirectUrl = redirectUrl;
+	/* (non-Javadoc)
+	 * @see com.mixblendr.gui.main.Publisher.Listener#onPublishingUpdate()
+	 */
+	public void onProgressUpdate() {
+		buttonPanel.onDisplayTimer(false);
 	}
 
-	public void showProgressDialog() {
-		String title = "Saving...";
-		UIManager.put("ProgressMonitor.progressText", title);
-		// progressMonitor = new ProgressMonitor(masterPanel,message, note, min,
-		// max);
-
-		// JOptionPane pane;
-		//
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				// JOptionPane.showMessageDialog(masterPanel, "saving", "xxx",
-				// JOptionPane.INFORMATION_MESSAGE);
-				// String message = "Saving file...plase wait";
-				// String note ="Mixing tracks";
-				// String title = "Saving...";
-				// UIManager.put("ProgressMonitor.progressText", title);
-				// int min = 0;
-				// int max = 100;
-				// progressMonitor = new ProgressMonitor(masterPanel,message,
-				// note, min, max);
-				// JOptionPane pane = new JOptionPane();
-				// pane.createDialog("xxx");
-				isPublishing = true;
-				isPublishSuccess = false;
-				final JPanel panel = new JPanel();
-				// panel.setLayout( new BoxLayout(panel, BoxLayout.Y_AXIS));
-				panel.setLayout(new BorderLayout(10, 10));
-				panel.setPreferredSize(new Dimension(300, 75));
-				// rderLayout(20,20));
-				JLabel label = new JLabel(
-						"      Uploading - this may take a few minutes.");
-				label.setFont(new Font("Arial", Font.PLAIN, 12));
-				JButton btnOK = new JButton("OK");
-				btnOK.setVisible(false);
-
-				panel.add(label, BorderLayout.CENTER, 0);
-				panel.add(btnOK, BorderLayout.PAGE_END, 1);
-
-				Rectangle r = masterPanel.getBounds();
-				publishingDialog = new JDialog((Frame) null, "Publishing...",
-						true);
-				publishingDialog.setContentPane(panel);
-				// publishingDialog.setPreferredSize(new Dimension(300,200));
-				publishingDialog.setBounds((int) r.getCenterX(),
-						(int) r.getCenterY(), 300, 200);
-				//
-				publishingDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-				publishingDialog.setResizable(false);
-
-				// final JOptionPane optionPane = new JOptionPane(
-				// "Uploading... Please wait",
-				// JOptionPane.INFORMATION_MESSAGE);
-				//
-				// optionPane.addPropertyChangeListener(
-				// new PropertyChangeListener() {
-				// public void propertyChange(PropertyChangeEvent e) {
-				// String prop = e.getPropertyName();
-				//
-				// if (publishingDialog.isVisible()
-				// && (e.getSource() == optionPane)
-				// && (prop.equals(JOptionPane.VALUE_PROPERTY) ||
-				// prop.equals(JOptionPane.INPUT_VALUE_PROPERTY))) {
-				// //If you were going to check something
-				// //before closing the window, you'd do
-				// //it here.
-				// publishingDialog.setVisible(false);
-				// }
-				// }
-				// });
-				publishingDialog.pack();
-				publishingDialog.setVisible(true);
-			}
-		});
-
+	/* (non-Javadoc)
+	 * @see com.mixblendr.gui.main.Publisher.Listener#onPublishingCanceled()
+	 */
+	public void onProgressCanceled() {
+		// ignored
 	}
 
-	// public void setProgressDialogMessage(String message)
-	// {
-	// if (publishingDialog != null)
-	// {
-	// JPanel panel =(JPanel) publishingDialog.getContentPane();
-	// Component component = panel.getComponent(0);
-	// if (component instanceof JLabel)
-	// {
-	// JLabel label = (JLabel)component;
-	// label.setText(message);
-	// }
-	//
-	// }
-	// }
-
-	// TODO: rename to publishSuccess(), make private
-	public void setSuccess() {
-		if (publishingDialog != null) {
-			isPublishSuccess = true;
-			JPanel panel = (JPanel) publishingDialog.getContentPane();
-			JButton btnOK = (JButton) panel.getComponent(1);
-			btnOK.addActionListener(this);
-
-			btnOK.setVisible(true);
-
-			JLabel label = (JLabel) panel.getComponent(0);
-			label.setText("      Publishing successful!");
+	/* (non-Javadoc)
+	 * @see com.mixblendr.gui.main.Publisher.Listener#onPublishingEnd(boolean)
+	 */
+	public void onProgressEnd(boolean success) {
+		if (success) {
+			updateAll();
 		}
 	}
 
-	// TODO: rename to publishFailed(), make private
-	public void setFailed() {
-		if (publishingDialog != null) {
-			JPanel panel = (JPanel) publishingDialog.getContentPane();
-			JButton btnOK = (JButton) panel.getComponent(1);
-			btnOK.setVisible(true);
-			btnOK.addActionListener(this);
-
-			JLabel label = (JLabel) panel.getComponent(0);
-			label.setText("      Publishing failed!");
-		}
-
-	}
-
-	// TODO: rename to hidePublishProgressDialog(), make private
-	public void hideProgressDialog() {
-		if (isPublishing && publishingDialog != null) {
-			publishingDialog.dispose();
-			isPublishing = false;
-		}
-	}
-
-	// TODO: do not use global listener
-	public void actionPerformed(ActionEvent e) {
-		if (publishingDialog != null) {
-			if (isPublishSuccess) {
-
-				try {
-					publishingDialog.dispose();
+	/* (non-Javadoc)
+	 * @see com.mixblendr.gui.main.Publisher.Listener#onPublishingDialogDismissed(boolean)
+	 */
+	public void onProgressDialogDismissed(boolean success) {
+		if (success) {
+			try {
+				if (getApplet() != null
+						&& redirectAfterPublishURL != null
+						&& redirectAfterPublishURL.length() > 0) {
+					URL url = new URL(redirectAfterPublishURL);
 					close();
-					URL url = new URL(redirectUrl);
 					getApplet().getAppletContext().showDocument(url);
-				} catch (MalformedURLException e1) {
-
 				}
-
-			} else {
-				publishingDialog.dispose();
+			} catch (MalformedURLException e1) {
+				// ignore
 			}
-		}
+		}		
 	}
+
 }

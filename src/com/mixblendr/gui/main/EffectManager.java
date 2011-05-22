@@ -102,8 +102,7 @@ class EffectManager {
 					for (int i = 0; i < effectCount; i++) {
 						if (selected == values[i + 1]) {
 							def = (AudioEffect) effectClass.get(i).newInstance();
-							def.init(globals.getState(), globals.getPlayer(),
-									track);
+							def.init(globals.getState(), track);
 							break;
 						}
 					}

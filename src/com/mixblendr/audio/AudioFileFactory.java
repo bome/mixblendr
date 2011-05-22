@@ -111,7 +111,7 @@ public final class AudioFileFactory {
 		String source = file.getCanonicalPath();
 		AudioFile ret = findAudioFile(source);
 		if (ret == null) {
-			URL url = file.toURL();
+			URL url = file.toURI().toURL();
 			if (USE_ONLY_MEM_FILES) {
 				ret = new AudioFileURLMem(state, url);
 			} else {

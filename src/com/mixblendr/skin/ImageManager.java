@@ -45,31 +45,51 @@ public class ImageManager {
 	protected final static Component component = new Component() {
 		// nothing
 	};
+	
+	private boolean tryResPath(String base, String filename) {
+		String path = base + '/' + filename;
+		baseURL = resourceClass.getResource(path);
+		if (baseURL == null && basePath.length() > 0 && basePath.charAt(0) == '/') {
+			// try non-absolute path
+			base = base.substring(1);
+			path = base + '/' + filename;
+			baseURL = resourceClass.getResource(path);
+		}
+		if (baseURL == null) {
+			// try parent dirs
+			for (int i = 0; i < 7; i++) {
+				base = "../" + base;
+				path = base + '/' + filename;
+				baseURL = resourceClass.getResource(path);
+				if (baseURL != null) {
+					break;
+				}
+			}
+		}
+		if (baseURL != null) {
+			basePath = base;
+			return true;
+		}
+		return false;
+	}
 
 	public URL getImageURL(String filename) throws ImageNotFoundException {
 		if (baseURL == null) {
-			String origBasePath = basePath;
-			String path = basePath + '/' + filename;
-			baseURL = resourceClass.getResource(path);
-			if (baseURL == null && basePath.length() > 0 && basePath.charAt(0) == '/') {
-				// try non-absolute path
-				basePath = basePath.substring(1);
-				path = basePath + '/' + filename;
-				baseURL = resourceClass.getResource(path);
-			}
-			if (baseURL == null) {
-				// try parent dirs
-				for (int i = 0; i < 7; i++) {
-					basePath = "../" + basePath;
-					path = basePath + '/' + filename;
-					baseURL = resourceClass.getResource(path);
-					if (baseURL != null) {
+			if (!tryResPath(basePath, filename)) {
+				// try without the first directory in basePath
+				int index = 0;
+				if (basePath.length() > 0 && basePath.charAt(0) == '/') {
+					index++;
+				}
+				while (index < basePath.length()) {
+					if (basePath.charAt(index) == '/') {
+						tryResPath(basePath.substring(index), filename);
 						break;
 					}
+					index++;
 				}
 			}
 			if (baseURL == null) {
-				basePath = origBasePath;
 				throw new ImageNotFoundException("cannot find " + basePath);
 			}
 			if (TRACE) debug("ImageManager: baseURL=" + baseURL);

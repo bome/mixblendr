@@ -38,7 +38,7 @@ public class AudioState {
 	private int beatsPerMeasure = 4;
 	private double masterVolume = 0.7;
 	private boolean timeDisplayInBeats = true;
-	// private boolean automationActive = false;
+	private boolean started = false;
 
 	private AudioFileFactory audioFileFactory;
 	private AutomationEventDispatcher automationDispatcher;
@@ -53,6 +53,7 @@ public class AudioState {
 	}
 
 	/**
+	 * set channels (set by AudioOutput)
 	 * @param channels the channels to set
 	 */
 	void setChannels(int channels) {
@@ -67,6 +68,7 @@ public class AudioState {
 	}
 
 	/**
+	 * set samplerate (set by AudioOutput)
 	 * @param sampleRate the sampleRate to set
 	 */
 	void setSampleRate(float sampleRate) {
@@ -81,22 +83,22 @@ public class AudioState {
 	}
 
 	/** utility method to convert a sample position to a millisecond position */
-	public double sample2millis(long samplePos) {
+	public final double sample2millis(long samplePos) {
 		return AudioUtils.frames2MillisD(samplePos, sampleRate);
 	}
 
 	/** utility method to convert a sample position to a second position */
-	public double sample2seconds(long samplePos) {
+	public final double sample2seconds(long samplePos) {
 		return samplePos / ((double) sampleRate);
 	}
 
 	/** utility method to convert a millisecond position to a sample position */
-	public long millis2sample(double millis) {
+	public final long millis2sample(double millis) {
 		return AudioUtils.millis2Frames(millis, sampleRate);
 	}
 
 	/** utility method to convert a second position to a sample position */
-	public long seconds2sample(double seconds) {
+	public final long seconds2sample(double seconds) {
 		return (long) (seconds * sampleRate);
 	}
 
@@ -104,7 +106,7 @@ public class AudioState {
 	 * utility method to convert a second position to a a double precision
 	 * sample position
 	 */
-	public double seconds2sampleD(double seconds) {
+	public final double seconds2sampleD(double seconds) {
 		return (long) (seconds * sampleRate);
 	}
 
@@ -112,7 +114,7 @@ public class AudioState {
 	 * utility method to convert a sample position to a beat count, using the
 	 * current tempo
 	 */
-	public double sample2beat(long sample) {
+	public final double sample2beat(long sample) {
 		return seconds2beat(sample2seconds(sample));
 	}
 
@@ -120,7 +122,7 @@ public class AudioState {
 	 * utility method to convert a seconds position to a beat count, using the
 	 * current tempo
 	 */
-	public double seconds2beat(double second) {
+	public final double seconds2beat(double second) {
 		return second * this.tempo / 60.0;
 	}
 
@@ -128,7 +130,7 @@ public class AudioState {
 	 * utility method to convert a beat position to a second position, using the
 	 * current tempo
 	 */
-	public double beat2seconds(double beat) {
+	public final double beat2seconds(double beat) {
 		return beat * 60.0 / this.tempo;
 	}
 
@@ -136,7 +138,7 @@ public class AudioState {
 	 * utility method to convert a beat position to a sample position, using the
 	 * current tempo
 	 */
-	public long beat2sample(double beat) {
+	public final long beat2sample(double beat) {
 		return seconds2sample(beat2seconds(beat));
 	}
 
@@ -144,7 +146,7 @@ public class AudioState {
 	 * utility method to convert a beat position to a double precision sample
 	 * position, using the current tempo
 	 */
-	public double beat2sampleD(double beat) {
+	public final double beat2sampleD(double beat) {
 		return seconds2sampleD(beat2seconds(beat));
 	}
 
@@ -154,7 +156,7 @@ public class AudioState {
 	 * 
 	 * @param beat the beat, 0...getBeatsPerMeasure()-1
 	 */
-	public long measure2sample(long measure, int beat) {
+	public final long measure2sample(long measure, int beat) {
 		return beat2sample(measure2beats(measure, beat));
 	}
 
@@ -164,7 +166,7 @@ public class AudioState {
 	 * 
 	 * @param beat the beat, 0...getBeatsPerMeasure()-1
 	 */
-	public double measure2seconds(long measure, int beat) {
+	public final double measure2seconds(long measure, int beat) {
 		return beat2seconds(measure2beats(measure, beat));
 	}
 
@@ -174,7 +176,7 @@ public class AudioState {
 	 * 
 	 * @param beat the beat, 0...getBeatsPerMeasure()-1
 	 */
-	public double measure2beats(long measure, int beat) {
+	public final double measure2beats(long measure, int beat) {
 		return (double) (measure * beatsPerMeasure) + beat;
 	}
 
@@ -292,6 +294,10 @@ public class AudioState {
 	}
 
 	/**
+	 * set the current position, with an accuracy of sample slices. During
+	 * playback, this method is called by AudioMixer. In stopped mode, it's
+	 * called by AudioPlayer when the position is changed.
+	 * 
 	 * @param sampleSlicePosition the sampleSlicePosition to set
 	 */
 	void setSampleSlicePosition(long sampleSlicePosition) {
@@ -317,16 +323,16 @@ public class AudioState {
 	/**
 	 * @return the system time, expressed in samples since starting the Java VM
 	 */
-	final long getSampleSystemTime() {
+	private final long getSampleSystemTime() {
 		long us = (System.nanoTime() - startTimeNanos) / 1000L;
 		return (long) (us / 1000000.0 * sampleRate);
 	}
 
 	/** the system time of the known sample time, in samples */
-	long knownSampleSystemTime = -1;
+	private long knownSampleSystemTime = -1;
 
 	/** the slice position at the known sample system time, in samples */
-	long knownSampleSlicePos = -1;
+	private long knownSampleSlicePos = -1;
 
 	/**
 	 * remember the time (in samples) of the last write operation to the
@@ -337,7 +343,7 @@ public class AudioState {
 	/**
 	 * called by AudioOutput whenever a buffer was just written to the
 	 * soundcard. A heuristic tries to guess when the buffer will actually be
-	 * played, for getSamplePlaybackPosition()
+	 * played, for getSamplePosition().
 	 */
 	final void bufferWrittenToOutput() {
 		long newTime = getSampleSystemTime();
@@ -350,11 +356,20 @@ public class AudioState {
 	}
 
 	/**
+	 * called to reset the interpolator for the current play time.
+	 */
+	final void resetSamplePositionInterpolation() {
+		// disable interpolation
+		knownSampleSystemTime = -1;
+		knownSampleSlicePos = -1;
+	}
+
+	/**
 	 * The number of samples that are rendered at once in the audio engine.
 	 * 
 	 * @return the slice size in samples
 	 */
-	public int getSliceSizeSamples() {
+	public final int getSliceSizeSamples() {
 		return sampleSliceSize;
 	}
 
@@ -363,15 +378,52 @@ public class AudioState {
 	 * 
 	 * @return the sample slice size in milliseconds
 	 */
-	public double getSliceSizeMillis() {
+	public final double getSliceSizeMillis() {
 		return AudioUtils.frames2MillisD(sampleSliceSize, sampleRate);
 	}
 
 	/**
+	 * Set the slice size, called by AudioOutput
 	 * @param sampleSliceSize the slice size in samples to set
 	 */
-	void setSliceSize(int sampleSliceSize) {
+	final void setSliceSize(int sampleSliceSize) {
 		this.sampleSliceSize = sampleSliceSize;
+	}
+	
+	/**
+	 * the static lag from writing to audio device to when it's heard. This is
+	 * set by AudioPlayer after the AudioOutput was started.
+	 */
+	long audioSampleLag = 0;
+
+	/**
+	 * return an interpolated exact position in samples. It uses the last sample
+	 * slice time and calculates the time difference using System.nanoTime().
+	 */
+	public final long getSamplePosition() {
+		if (knownSampleSlicePos < 0 || !isStarted()) {
+			return getSampleSlicePosition();
+		}
+		long ret = getSampleSystemTime() - knownSampleSystemTime
+				+ knownSampleSlicePos - audioSampleLag;
+		if (ret < 0) {
+			return 0;
+		}
+		return ret;
+	}
+	
+	/**
+	 * @return if playback is started
+	 */
+	public final boolean isStarted() {
+		return started;
+	}
+
+	/**
+	 * @param started the started to set (is set from AudioOutput)
+	 */
+	final void setStarted(boolean started) {
+		this.started = started;
 	}
 
 	/**

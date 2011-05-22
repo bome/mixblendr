@@ -42,13 +42,10 @@ public class AudioRegion extends AutomationObject implements
 	 */
 	public AudioRegion(AudioState state, AudioFile audioFile) {
 		super(state);
-		this.af = audioFile;
 		this.audioFileOffset = 0;
-		this.duration = audioFile.getDurationSamples();
+		this.duration = (audioFile!=null)?audioFile.getDurationSamples():-1;
 		this.playbackPos = 0;
-		if (af != null && (af instanceof AudioFileURL)) {
-			((AudioFileURL) af).addListener(this);
-		}
+		setAudioFile(audioFile);
 	}
 
 	/** create a cloned copy of this region */
@@ -59,7 +56,7 @@ public class AudioRegion extends AutomationObject implements
 		return ar;
 	}
 
-	/** copy all parameters of this automation object to ao */
+	/** copy all parameters of this automation object to ao, except the audio file itself. */
 	@Override
 	public void assignTo(AutomationObject ao) {
 		super.assignTo(ao);
@@ -68,6 +65,14 @@ public class AudioRegion extends AutomationObject implements
 			ar.duration = duration;
 			ar.audioFileOffset = audioFileOffset;
 			ar.playbackPos = playbackPos;
+		}
+	}
+
+	@Override
+	protected void setOwner(Playlist playlist) {
+		super.setOwner(playlist);
+		if (playlist == null) {
+			close();
 		}
 	}
 
@@ -91,6 +96,14 @@ public class AudioRegion extends AutomationObject implements
 	 */
 	public AudioFile getAudioFile() {
 		return af;
+	}
+	
+	private void setAudioFile(AudioFile af) {
+		removeAudioFileDependency();
+		this.af = af;
+		if (af != null && (af instanceof AudioFileURL)) {
+			((AudioFileURL) af).addListener(this);
+		}
 	}
 
 	/**
@@ -150,6 +163,9 @@ public class AudioRegion extends AutomationObject implements
 	 *         then the entire region is playable.
 	 */
 	public long getAvailableSamples() {
+		if (af == null) {
+			return 0;
+		}
 		long avail = af.getAvailableSamples() - getAudioFileOffset();
 		if (avail < 0) {
 			avail = 0;
@@ -217,7 +233,7 @@ public class AudioRegion extends AutomationObject implements
 	 * to the actual start of this region. The entire buffer is overwritten,
 	 * even if the pre-load portion is too small to fill the entire buffer.
 	 */
-	public void fillFadeInBuffer(FloatSampleBuffer buffer) {
+	public final void fillFadeInBuffer(FloatSampleBuffer buffer) {
 		int count = buffer.getSampleCount();
 		int offset = 0;
 		if (audioFileOffset < count) {
@@ -264,7 +280,7 @@ public class AudioRegion extends AutomationObject implements
 
 	/**
 	 * Read from this region (and the underlying AudioFile) using the current
-	 * read position. After successful read, the position will advance by length
+	 * read position. After successful read, the position will advance by count
 	 * samples.
 	 * <p>
 	 * If the audio file is only partially available, or position is partially
@@ -321,7 +337,7 @@ public class AudioRegion extends AutomationObject implements
 			// fill the remainder with silence
 			buffer.makeSilence(offset + canWrite, count - canWrite);
 		}
-		if (af.isFullyLoaded()) {
+		if (canWrite > 0 && af.isFullyLoaded()) {
 			playbackPos += canWrite;
 		} else {
 			// if still loading, just advance by the full amount

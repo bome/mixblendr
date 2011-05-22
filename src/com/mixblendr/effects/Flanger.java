@@ -650,7 +650,7 @@ public class Flanger extends GUIEffectsBase {
 		 * time and the current delay time.
 		 */
 		public DelayTimeAutomation() {
-			super(state, player.getPositionSamples());
+			super(state, state.getSamplePosition());
 			this.aoDelayTimeMillis = getDelayTimeMillis();
 		}
 
@@ -686,7 +686,7 @@ public class Flanger extends GUIEffectsBase {
 		 * time and the current amplitude.
 		 */
 		public AmplitudeAutomation() {
-			super(state, player.getPositionSamples());
+			super(state, state.getSamplePosition());
 			this.aoAmplitude = getAmplitude();
 		}
 
@@ -721,7 +721,7 @@ public class Flanger extends GUIEffectsBase {
 		 * time and the current frequency.
 		 */
 		public FreqAutomation() {
-			super(state, player.getPositionSamples());
+			super(state, state.getSamplePosition());
 			this.aoFreq = getFrequency();
 		}
 
@@ -756,7 +756,7 @@ public class Flanger extends GUIEffectsBase {
 		 * time and the current feedback.
 		 */
 		public FeedbackAutomation() {
-			super(state, player.getPositionSamples());
+			super(state, state.getSamplePosition());
 			this.aoFeedback = getFeedback();
 		}
 
@@ -791,7 +791,7 @@ public class Flanger extends GUIEffectsBase {
 		 * time and the current balance.
 		 */
 		public BalanceAutomation() {
-			super(state, player.getPositionSamples());
+			super(state, state.getSamplePosition());
 			this.aoBalance = getBalance();
 		}
 

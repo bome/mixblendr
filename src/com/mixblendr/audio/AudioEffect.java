@@ -13,7 +13,7 @@ import org.tritonus.share.sampled.*;
 public interface AudioEffect {
 
 	/** called by the audio system to initialize this effect instance */
-	public void init(AudioState state, AudioPlayer player, AudioTrack track);
+	public void init(AudioState state, AudioTrack track);
 
 	/**
 	 * Called when this effect is not used anymore. It should free all

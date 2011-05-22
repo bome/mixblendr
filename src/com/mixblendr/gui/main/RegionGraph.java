@@ -220,7 +220,7 @@ public class RegionGraph extends Graph implements GraphScale.Listener,
 			this.section.setSection((int) region.getAudioFileOffset(),
 					(int) region.getEffectiveDurationSamples(), false);
 			if (!downloading) {
-				downloading = !region.getAudioFile().isFullyLoaded();
+				downloading = (region.getAudioFile() == null) || !region.getAudioFile().isFullyLoaded();
 			}
 		}
 		super.audioDataChanged();

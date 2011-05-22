@@ -15,23 +15,22 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import com.mixblendr.audio.AudioFile;
-import com.mixblendr.audio.AudioPlayer;
-import com.mixblendr.audio.AudioRegion;
-import com.mixblendr.audio.AudioState;
-import com.mixblendr.audio.AudioTrack;
+import com.mixblendr.audio.*;
 import com.mixblendr.util.Debug;
 import com.mixblendr.util.Utils;
 
 /**
- * References to global classes
+ * References to global classes, and some settings.
  * 
  * @author Florian Bomers
  */
 public class Globals implements ChangeListener {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	final static boolean DEBUG_DRAG_SCROLL = false;
+
+	/** if publishing to a local file is possible. */
+	public static boolean CAN_PUBLISH_TO_LOCAL_FILE = true;
 
 	private GraphScale scale;
 
@@ -55,14 +54,8 @@ public class Globals implements ChangeListener {
 	private int allRegionsScrollX;
 	private int allRegionsScrollWidth;
 
-	private boolean publishing = false;
-
-	private String fileName;
-
-	public String getFileName() {
-		return fileName;
-	}
-
+	private ProgressDialog progressDialog;
+	
 	/**
 	 * a global key listener that all focusable controls (except text fields
 	 * that only receive temporary focus) should set
@@ -70,7 +63,7 @@ public class Globals implements ChangeListener {
 	private KeyListener globalKeyListener;
 
 	/**
-	 * Create a new globals object, instanciating the scale and snaptobeats
+	 * Create a new globals object, instantiating the scale and snaptobeats
 	 * objects.
 	 * 
 	 * @param player the player object to be set
@@ -82,8 +75,9 @@ public class Globals implements ChangeListener {
 		operation = RegionMouseOperation.SCISSOR;
 		snapToBeats = new SnapToBeats(state, scale);
 		selectionManager = new RegionSelectionManager();
+		progressDialog = new ProgressDialog(this);
 	}
-
+	
 	/**
 	 * Return the current mouse action, i.e. one of the RegionMouseOperation's
 	 * constants.
@@ -160,6 +154,13 @@ public class Globals implements ChangeListener {
 	 */
 	void setMasterPanel(JComponent masterPanel) {
 		this.masterPanel = masterPanel;
+	}
+	
+	/**
+	 * @return the progress dialog
+	 */
+	public ProgressDialog getProgressDialog() {
+		return progressDialog;
 	}
 
 	/**
@@ -327,7 +328,7 @@ public class Globals implements ChangeListener {
 	public void togglePlayback() {
 		if (player == null) return;
 
-		if (publishing) return;
+		if (progressDialog.isInProgress()) return;
 
 		if (player.isStarted()) {
 			stopPlayback();
@@ -336,59 +337,16 @@ public class Globals implements ChangeListener {
 		}
 	}
 
-	public void startSaveFile() {
-		if (publishing) {
-			Debug.displayInfoDialogAsync(allRegionsViewPort, null,
-					"This song is already published.");
-			return;
-		}
-		if (getPlayer().getOutput().isPlaying()) {
-			Debug.displayInfoDialogAsync(allRegionsViewPort, null,
-					"Cannot publish a track during playback.");
-			return;
-		}
-
-		if (player.getMixer().isEmpty()) {
-			Debug.displayInfoDialogAsync(allRegionsViewPort, null,
-					"Nothing to publish.");
-			return;
-		}
-
-		double minStartTime = player.getMixer().getStartTimeSeconds();
-		if (minStartTime > 60) {
-			Debug.displayInfoDialogAsync(allRegionsViewPort, null,
-					"Your song has at least 1 minute of silence at the beginning.<br>" +
-					"To publish your song, please move it to the beginning of the timeline.");
-			return;
-		}
-
-		int dialogresult = JOptionPane.showConfirmDialog(
-				allRegionsViewPort,
-				"Are you sure you want to publish this track?<br>" +
-				"You won't be able to make any further edits after you have published it.",
-				"Publishing track", JOptionPane.YES_NO_OPTION);
-		if (dialogresult == JOptionPane.YES_OPTION) {
-			String result = JOptionPane.showInputDialog(allRegionsViewPort,
-					"Please enter the name of the track", "my_track.ogg");
-			if (result != null && !result.equals("")) {
-
-				if (!result.endsWith(".ogg")) {
-					result += ".ogg";
-				}
-				getPlayer().getOutput().setFileName(result);
-				publishing = true;
-				// TODO: do not select publish mode by closing the audio output
-				getPlayer().getOutput().close();
-				try {
-					player.start();
-				} catch (Exception e) {
-					Debug.displayErrorDialogAsync(allRegionsViewPort, e,
-							"Error when publishing");
-				}
-			}
-		}
+	/**
+	 * @return true if currently in asynchronous publishing mode 
+	 */
+	public boolean isPublishing() {
+		return progressDialog.isInProgress();
 	}
 
+	
+	// ----------------------------------------- AUTOSCROLL
+	
 	// autoscroll support for dragging and for the position grid
 	public final static int AUTO_SCROLL_PIXEL = 40;
 

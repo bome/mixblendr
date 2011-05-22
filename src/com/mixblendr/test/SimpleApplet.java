@@ -833,11 +833,11 @@ public class SimpleApplet extends JApplet {
 				}
 				currentEffect[track] = null;
 			}
-			// create new effect
+			// create new effect instance
 			if (clazz != null) {
 				try {
 					currentEffect[track] = (AudioEffect) clazz.newInstance();
-					currentEffect[track].init(player.getState(), player,
+					currentEffect[track].init(player.getState(), 
 							player.getMixer().getTrack(track));
 					if (player != null
 							&& track < player.getMixer().getTrackCount()) {
@@ -1302,48 +1302,12 @@ public class SimpleApplet extends JApplet {
 			});
 		}
 
-		//TODO: remove
-        public void showMessage(String title, String context)
-        {
-            
-        }
-
-		//TODO: remove
-        public void showProgressDialog()
-        {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-		//TODO: remove
-        public void hideProgressDialog()
-        {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-		//TODO: remove
-        public void setSuccess() // uploading is success
-        {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-		//TODO: remove
-        public void setFailed() // uploading is failed
-        {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-		//TODO: remove
-        public void setProgressDialogMessage(String message)
-        {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        /*
-           * (non-Javadoc)
-           *
-           * @see com.mixblendr.audio.AudioListener#audioFileDownloadError(com.mixblendr.audio.AudioFile,
-           *      java.lang.Throwable)
-           */
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see com.mixblendr.audio.AudioListener#audioFileDownloadError(com.mixblendr.audio.AudioFile,
+		 *      java.lang.Throwable)
+		 */
 		public void audioFileDownloadError(AudioFile file, Throwable t) {
 			text("Error downloading " + file);
 			text(t.getMessage());

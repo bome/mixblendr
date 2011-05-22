@@ -25,7 +25,7 @@ public abstract class AutomationObject {
 	 * this field will be set whenever the automation object is added to a
 	 * playlist
 	 */
-	Playlist owner;
+	protected Playlist owner;
 
 	/** the handler associated with this automation object */
 	private AutomationHandler handler;
@@ -33,7 +33,6 @@ public abstract class AutomationObject {
 	/** private def constructor to prevent using this constructor */
 	private AutomationObject() {
 		super();
-		owner = null;
 		// register its handler
 		handler = AutomationManager.getHandler(this);
 	}
@@ -58,6 +57,16 @@ public abstract class AutomationObject {
 	protected AutomationObject(AudioState state, long startSample) {
 		this(state);
 		setStartTimeSamples(startSample);
+	}
+
+	/**
+	 * Called by the playlist when this object is added to it.
+	 */
+	protected void setOwner(Playlist playlist) {
+		this.owner = playlist;
+		if (playlist != null) {
+			this.state = playlist.getState();
+		}
 	}
 
 	/**
@@ -113,6 +122,9 @@ public abstract class AutomationObject {
 	 * @return the startTime in milliseconds
 	 */
 	public double getStartTimeMillis() {
+		if (state == null) {
+			return 0.0;
+		}
 		return state.sample2millis(startTime);
 	}
 
@@ -120,6 +132,9 @@ public abstract class AutomationObject {
 	 * get the start time of this region in seconds
 	 */
 	public double getStartTimeSeconds() {
+		if (state == null) {
+			return 0.0;
+		}
 		return state.sample2seconds(startTime);
 	}
 
@@ -156,7 +171,9 @@ public abstract class AutomationObject {
 	 * @param startMillis the startTime to set in milliseconds
 	 */
 	public void setStartTimeMillis(double startMillis) {
-		setStartTimeSamples(state.millis2sample(startMillis));
+		if (state != null) {
+			setStartTimeSamples(state.millis2sample(startMillis));
+		}
 	}
 
 	/**
@@ -164,18 +181,23 @@ public abstract class AutomationObject {
 	 * automation object is triggered.
 	 * <p>
 	 * The implementation will first call executeImpl(), then notify the
-	 * AudioState of the occurence of this automation event for asynchronous
+	 * AudioState of the occurrence of this automation event for asynchronous
 	 * event dispatching.
 	 * 
-	 * @param track the audio track on which this automation event occured
+	 * @param track the audio track on which this automation event occurred
 	 */
 	final void execute(AudioTrack track) {
+		if (state == null) {
+			state = track.getState();
+		}
 		if (handler.isTracking(track)) {
 			// ignore this object if currently tracking
 			return;
 		}
 		executeImpl(track);
-		state.getAutomationEventDispatcher().dispatchEvent(this, track);
+		if (state != null) {
+			state.getAutomationEventDispatcher().dispatchEvent(this, track);
+		}
 	}
 
 	/**

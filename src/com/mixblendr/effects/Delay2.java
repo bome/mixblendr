@@ -468,7 +468,7 @@ public class Delay2 extends GUIEffectsBase {
 		 * time and the current delay time.
 		 */
 		public DelayTimeAutomation() {
-			super(state, player.getPositionSamples());
+			super(state, state.getSamplePosition());
 			this.aoDelayTimeBeats = getDelayTimeBeats();
 		}
 
@@ -504,7 +504,7 @@ public class Delay2 extends GUIEffectsBase {
 		 * time and the current feedback.
 		 */
 		public FeedbackAutomation() {
-			super(state, player.getPositionSamples());
+			super(state, state.getSamplePosition());
 			this.aoFeedback = getFeedback();
 		}
 
@@ -539,7 +539,7 @@ public class Delay2 extends GUIEffectsBase {
 		 * time and the current balance.
 		 */
 		public BalanceAutomation() {
-			super(state, player.getPositionSamples());
+			super(state, state.getSamplePosition());
 			this.aoBalance = getBalance();
 		}
 

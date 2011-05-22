@@ -325,6 +325,27 @@ public class AudioTrack {
 	}
 
 	/**
+	 * Return the specified effect by class. If there are multiple effects of
+	 * the given class, return the first one.
+	 * 
+	 * @return the effect of the given class, or null if no effect of this
+	 *         class.
+	 */
+	@SuppressWarnings("rawtypes")
+	public AudioEffect getEffect(Class clazz) {
+		synchronized (effects) {
+			final int c = effects.size();
+			for (int i = 0; i < c; i++) {
+				AudioEffect ae = effects.get(i);
+				if (ae.getClass().equals(clazz)) {
+					return ae;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * convenience method for creating a region, and adding it to the track's
 	 * playlist
 	 */

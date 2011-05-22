@@ -159,10 +159,10 @@ public class MButton extends JComponent implements MControl, MouseListener {
 		}
 	}
 
-	protected void fireActionEvent() {
+	protected void fireActionEvent(int modifiers) {
 		// fire action listener
 		if (listeners != null && listeners.size() > 0) {
-			ActionEvent ae = new ActionEvent(this, 0, null);
+			ActionEvent ae = new ActionEvent(this, 0, null, modifiers);
 			for (ActionListener l : listeners) {
 				l.actionPerformed(ae);
 			}
@@ -175,7 +175,7 @@ public class MButton extends JComponent implements MControl, MouseListener {
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
 	public void mouseClicked(MouseEvent e) {
-		fireActionEvent();
+		fireActionEvent(e.getModifiers());
 	}
 
 	/*
