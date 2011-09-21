@@ -1,14 +1,50 @@
-<project name="CreateSgnedJar" default="mixblendr_signed.jar">
-<target name="mixblendr_signed.jar">
-<signjar jar="U:/htdocs/nervesound/mixblendr.jar"
-signedjar="U:/htdocs/nervesound/mixblendr_signed.jar"
-alias="nervesound"
-keystore="..\Certificate\test.keystore"
-storepass="nssppw"
-keypass="nspwbyfb"
+<project name="CreateSignedJar" default="all">
 
->
-</signjar>
-<echo>Created U:/htdocs/nervesound/mixblendr_signed.jar.</echo>
-</target>
+	<property name="src_dir" value="U:/htdocs/nervesound" />
+	<property name="dst_dir" value="U:/htdocs/nervesound/signed" />
+
+	<property name="key_alias" value="nervesound" />
+	<property name="key_store" value="..\Certificate\test.keystore" />
+	<property name="store_pass" value="nssppw" />
+	<property name="key_pass" value="nspwbyfb" />
+
+	<target name="sign">
+		<signjar jar="${src_dir}/${jar}" signedjar="${dst_dir}/${jar}" alias="${key_alias}" keystore="${key_store}" storepass="${store_pass}" keypass="${key_pass}">
+		</signjar>
+	</target>
+
+	<target name="all">
+		<antcall target="sign">
+			<param name="jar" value="mixblendr.jar" />
+		</antcall>
+		<antcall target="sign">
+			<param name="jar" value="tritonus_share-0.3.7.jar" />
+		</antcall>
+		<antcall target="sign">
+			<param name="jar" value="tritonus_mp3-0.3.7.jar" />
+		</antcall>
+		<antcall target="sign">
+			<param name="jar" value="tritonus_jorbis-0.3.7.jar" />
+		</antcall>
+		<antcall target="sign">
+			<param name="jar" value="tritonus_src-0.3.7.jar" />
+		</antcall>
+		<antcall target="sign">
+			<param name="jar" value="jogg-0.0.7.jar" />
+		</antcall>
+		<antcall target="sign">
+			<param name="jar" value="jl1.0.jar" />
+		</antcall>
+		<antcall target="sign">
+			<!-- legacy mp3 decoder -->
+			<param name="jar" value="javalayer.jar" />
+		</antcall>
+		<antcall target="sign">
+			<param name="jar" value="vorbis-java-1.0.0-beta.jar" />
+		</antcall>
+		<antcall target="sign">
+			<param name="jar" value="jorbis-0.0.15.jar" />
+		</antcall>
+	</target>
+
 </project>

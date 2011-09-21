@@ -10,8 +10,11 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
 import org.tritonus.share.sampled.FloatSampleBuffer;
+import org.w3c.dom.Element;
+
 import com.mixblendr.audio.*;
 import com.mixblendr.util.GUIUtils;
+import com.mixblendr.util.XmlPersistent;
 
 import static com.mixblendr.util.Debug.*;
 
@@ -20,7 +23,7 @@ import static com.mixblendr.util.Debug.*;
  * 
  * @author Florian Bomers
  */
-public class Flanger extends GUIEffectsBase {
+public class Flanger extends GUIEffectsBase implements XmlPersistent {
 
 	private static final boolean DEBUG_FLANGER = false;
 
@@ -57,6 +60,14 @@ public class Flanger extends GUIEffectsBase {
 	private static AutomationHandler freqHandler = AutomationManager.getHandler(FreqAutomation.class);
 	private static AutomationHandler feedbackHandler = AutomationManager.getHandler(FeedbackAutomation.class);
 	private static AutomationHandler balanceHandler = AutomationManager.getHandler(BalanceAutomation.class);
+
+	static {
+		AutomationManager.registerXML(DelayTimeAutomation.class, DelayTimeAutomation.XML_ELEMENT_NAME);
+		AutomationManager.registerXML(AmplitudeAutomation.class, AmplitudeAutomation.XML_ELEMENT_NAME);
+		AutomationManager.registerXML(FreqAutomation.class, FreqAutomation.XML_ELEMENT_NAME);
+		AutomationManager.registerXML(FeedbackAutomation.class, FeedbackAutomation.XML_ELEMENT_NAME);
+		AutomationManager.registerXML(BalanceAutomation.class, BalanceAutomation.XML_ELEMENT_NAME);
+	}
 
 	/** create a new instance of the Delay effect */
 	public Flanger() {
@@ -312,6 +323,7 @@ public class Flanger extends GUIEffectsBase {
 	private SliderStrip sFreq;
 	private SliderStrip sFeedback;
 	private SliderStrip sBalance;
+	private boolean guiInited = false;
 	/**
 	 * if this flag is non-zero, controls are currently set programmatically
 	 * rather than from user interaction
@@ -340,6 +352,8 @@ public class Flanger extends GUIEffectsBase {
 				"full")));
 		main.add((sBalance = new SliderStrip("Balance:", -100, 100, 0, "dry",
 				"wet")));
+		guiInited = true;
+
 
 		// init sliders and labels
 		updateGUIDelayTime();
@@ -362,6 +376,7 @@ public class Flanger extends GUIEffectsBase {
 
 	/** update the GUI with the current delay time */
 	protected void updateGUIDelayTime() {
+		if (!guiInited) return;
 		int index = 0;
 		if (delayTimeMillis < TIME_ZERO) {
 			index = (int) Math.round(((delayTimeMillis - TIME_ZERO) * sDelayTime.slider.getMinimum())
@@ -384,6 +399,7 @@ public class Flanger extends GUIEffectsBase {
 	 * accordingly
 	 */
 	protected void updateDelayTimeFromGUI() {
+		if (!guiInited) return;
 		int index = sDelayTime.slider.getValue();
 		if (index < 0) {
 			setDelayTimeMillis(TIME_ZERO - index * (TIME_ZERO - MIN_TIME)
@@ -396,6 +412,7 @@ public class Flanger extends GUIEffectsBase {
 
 	/** update the label of the with the current delay time */
 	private void updateGUIDelayTimeLabel() {
+		if (!guiInited) return;
 		String s = Double.toString((Math.round(delayTimeMillis * 100)) / 100.0);
 		if (s.length() > 2 && s.charAt(s.length() - 2) == '.') s += "0";
 		sDelayTime.label.setText(s + " ms");
@@ -405,6 +422,7 @@ public class Flanger extends GUIEffectsBase {
 
 	/** update the GUI with the current amplitude */
 	protected void updateGUIAmplitude() {
+		if (!guiInited) return;
 		noUpdate++;
 		try {
 			// will cause change event and update the label
@@ -419,12 +437,14 @@ public class Flanger extends GUIEffectsBase {
 	 * accordingly
 	 */
 	protected void updateAmplitudeFromGUI() {
+		if (!guiInited) return;
 		int index = sAmplitude.slider.getValue();
 		setAmplitude(index / 100.0);
 	}
 
 	/** update the label of the with the current amplitude */
 	private void updateGUIAmplitudeLabel() {
+		if (!guiInited) return;
 		sAmplitude.label.setText(Integer.toString(sAmplitude.slider.getValue())
 				+ " %");
 	}
@@ -437,6 +457,7 @@ public class Flanger extends GUIEffectsBase {
 
 	/** update the GUI with the current freq */
 	protected void updateGUIFreq() {
+		if (!guiInited) return;
 		int index = 0;
 		if (freq < FREQ_ZERO) {
 			index = (int) Math.round(((freq - FREQ_ZERO) * sFreq.slider.getMinimum())
@@ -459,6 +480,7 @@ public class Flanger extends GUIEffectsBase {
 	 * accordingly
 	 */
 	protected void updateFreqFromGUI() {
+		if (!guiInited) return;
 		int index = sFreq.slider.getValue();
 		if (index < 0) {
 			setFrequency(FREQ_ZERO - index * (FREQ_ZERO - MIN_FREQ)
@@ -471,6 +493,7 @@ public class Flanger extends GUIEffectsBase {
 
 	/** update the label of the with the current freq */
 	private void updateGUIFreqLabel() {
+		if (!guiInited) return;
 		String s = Double.toString((Math.round(freq * 100)) / 100.0);
 		if (s.length() > 2 && s.charAt(s.length() - 2) == '.') s += "0";
 		sFreq.label.setText(s + " Hz");
@@ -480,6 +503,7 @@ public class Flanger extends GUIEffectsBase {
 
 	/** update the GUI with the current feedback */
 	protected void updateGUIFeedback() {
+		if (!guiInited) return;
 		// will cause change event and update the label
 		noUpdate++;
 		try {
@@ -494,12 +518,14 @@ public class Flanger extends GUIEffectsBase {
 	 * accordingly
 	 */
 	protected void updateFeedbackFromGUI() {
+		if (!guiInited) return;
 		int index = sFeedback.slider.getValue();
 		setFeedback(index / 100.0);
 	}
 
 	/** update the label of the with the current feedback */
 	private void updateGUIFeedbackLabel() {
+		if (!guiInited) return;
 		sFeedback.label.setText(Integer.toString(sFeedback.slider.getValue())
 				+ " %");
 	}
@@ -508,6 +534,7 @@ public class Flanger extends GUIEffectsBase {
 
 	/** update the GUI with the current balance */
 	protected void updateGUIBalance() {
+		if (!guiInited) return;
 		// will cause change event and update the label
 		noUpdate++;
 		try {
@@ -522,12 +549,14 @@ public class Flanger extends GUIEffectsBase {
 	 * accordingly
 	 */
 	protected void updateBalanceFromGUI() {
+		if (!guiInited) return;
 		int index = sBalance.slider.getValue();
 		setBalance(index / 100.0);
 	}
 
 	/** update the label of the with the current balance */
 	private void updateGUIBalanceLabel() {
+		if (!guiInited) return;
 		sBalance.label.setText(Integer.toString(sBalance.slider.getValue())
 				+ " %");
 	}
@@ -541,15 +570,15 @@ public class Flanger extends GUIEffectsBase {
 	private void addAutomationEvent(Object src) {
 		if ((track != null) && track.isAutomationEnabled()) {
 			if (src == sDelayTime.slider) {
-				track.addAutomationObject(new DelayTimeAutomation());
+				track.addAutomationObject(new DelayTimeAutomation(this));
 			} else if (src == sAmplitude.slider) {
-				track.addAutomationObject(new AmplitudeAutomation());
+				track.addAutomationObject(new AmplitudeAutomation(this));
 			} else if (src == sFreq.slider) {
-				track.addAutomationObject(new FreqAutomation());
+				track.addAutomationObject(new FreqAutomation(this));
 			} else if (src == sFeedback.slider) {
-				track.addAutomationObject(new FeedbackAutomation());
+				track.addAutomationObject(new FeedbackAutomation(this));
 			} else if (src == sBalance.slider) {
-				track.addAutomationObject(new BalanceAutomation());
+				track.addAutomationObject(new BalanceAutomation(this));
 			}
 		}
 	}
@@ -637,33 +666,89 @@ public class Flanger extends GUIEffectsBase {
 			addAutomationEvent(src);
 		}
 	}
+	
+	// PERSISTENCE
+
+	@Override
+	public Element xmlExport(Element element) {
+		element = super.xmlExport(element);
+		element.setAttribute("DelayTimeMillis", String.valueOf(delayTimeMillis));
+		element.setAttribute("Amplitude", String.valueOf(amplitude));
+		element.setAttribute("Frequency", String.valueOf(freq));
+		element.setAttribute("Feedback", String.valueOf(feedback));
+		element.setAttribute("Balance", String.valueOf(balance));
+		return element;
+	}
+
+	@Override
+	public void xmlImport(Element element) throws Exception {
+		super.xmlImport(element);
+		String val = element.getAttribute("DelayTimeMillis");
+		if (val.length() > 0) {
+			setDelayTimeMillis(Double.parseDouble(val));
+		}
+		val = element.getAttribute("Amplitude");
+		if (val.length() > 0) {
+			setAmplitude(Double.parseDouble(val));
+		}
+		val = element.getAttribute("Frequency");
+		if (val.length() > 0) {
+			setFrequency(Double.parseDouble(val));
+		}
+		val = element.getAttribute("Feedback");
+		if (val.length() > 0) {
+			setFeedback(Double.parseDouble(val));
+		}
+		val = element.getAttribute("Balance");
+		if (val.length() > 0) {
+			setBalance(Double.parseDouble(val));
+		}
+	}
+
 
 	// ----------------------------------------- AUTOMATION
 
 	/** the automation object to record a change in delay time */
-	private class DelayTimeAutomation extends AutomationObject {
+	public static class DelayTimeAutomation extends AutomationObjectDouble {
+		private static final String XML_ELEMENT_NAME = "FlangerDelayTime";
+		private Flanger target;
 
-		private double aoDelayTimeMillis;
+		/**
+		 * Create an instance with default values, should only be used before
+		 * xml import.
+		 */
+		public DelayTimeAutomation() {
+			super(null, XML_ELEMENT_NAME, 0, 20.0);
+		}
 
 		/**
 		 * Create a delay time automation object capturing the current playback
 		 * time and the current delay time.
 		 */
-		public DelayTimeAutomation() {
-			super(state, state.getSamplePosition());
-			this.aoDelayTimeMillis = getDelayTimeMillis();
+		public DelayTimeAutomation(Flanger target) {
+			super(target.state, XML_ELEMENT_NAME,
+					target.state.getSamplePosition(),
+					target.getDelayTimeMillis());
+			this.target = target;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
-		 * @see com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio.AudioTrack)
+		 * @see
+		 * com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio
+		 * .AudioTrack)
 		 */
 		@Override
 		protected void executeImpl(AudioTrack aTrack) {
-			if (state == null) return;
-			setDelayTimeMillis(aoDelayTimeMillis);
-			updateGUIDelayTime();
+			if (target == null) {
+				// try to derive the target
+				if (owner != null && owner.getOwner() != null) {
+					target = (Flanger) owner.getOwner().getEffect(Flanger.class);
+				}
+				if (target == null || target.state == null) return;
+			}
+			target.setDelayTimeMillis(value);
+			target.updateGUIDelayTime();
 		}
 
 		/**
@@ -672,34 +757,50 @@ public class Flanger extends GUIEffectsBase {
 		 */
 		@Override
 		public String toString() {
-			return super.toString() + ", delay time=" + aoDelayTimeMillis
-					+ "ms";
+			return super.toString() + ", delay time=" + value + "ms";
 		}
 	}
 
 	/** the automation object to record a change in amplitude */
-	private class AmplitudeAutomation extends AutomationObject {
-		private double aoAmplitude;
+	public static class AmplitudeAutomation extends AutomationObjectDouble {
+		private static final String XML_ELEMENT_NAME = "FlangerAmplitude";
+		private Flanger target;
+
+		/**
+		 * Create an instance with default values, should only be used before
+		 * xml import.
+		 */
+		public AmplitudeAutomation() {
+			super(null, XML_ELEMENT_NAME, 0, 0.5);
+		}
 
 		/**
 		 * Create a amplitude automation object capturing the current playback
 		 * time and the current amplitude.
 		 */
-		public AmplitudeAutomation() {
-			super(state, state.getSamplePosition());
-			this.aoAmplitude = getAmplitude();
+		public AmplitudeAutomation(Flanger target) {
+			super(target.state, XML_ELEMENT_NAME,
+					target.state.getSamplePosition(), target.getAmplitude());
+			this.target = target;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
-		 * @see com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio.AudioTrack)
+		 * @see
+		 * com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio
+		 * .AudioTrack)
 		 */
 		@Override
 		protected void executeImpl(AudioTrack aTrack) {
-			if (state == null) return;
-			setAmplitude(aoAmplitude);
-			updateGUIAmplitude();
+			if (target == null) {
+				// try to derive the target
+				if (owner != null && owner.getOwner() != null) {
+					target = (Flanger) owner.getOwner().getEffect(Flanger.class);
+				}
+				if (target == null || target.state == null) return;
+			}
+			target.setAmplitude(value);
+			target.updateGUIAmplitude();
 		}
 
 		/**
@@ -708,33 +809,50 @@ public class Flanger extends GUIEffectsBase {
 		 */
 		@Override
 		public String toString() {
-			return super.toString() + ", amplitude=" + aoAmplitude;
+			return super.toString() + ", amplitude=" + value;
 		}
 	}
 
 	/** the automation object to record a change in frequency */
-	private class FreqAutomation extends AutomationObject {
-		private double aoFreq;
+	public static class FreqAutomation extends AutomationObjectDouble {
+		private static final String XML_ELEMENT_NAME = "FlangerFreq";
+		private Flanger target;
+
+		/**
+		 * Create an instance with default values, should only be used before
+		 * xml import.
+		 */
+		public FreqAutomation() {
+			super(null, XML_ELEMENT_NAME, 0, 1.0);
+		}
 
 		/**
 		 * Create a frequency automation object capturing the current playback
 		 * time and the current frequency.
 		 */
-		public FreqAutomation() {
-			super(state, state.getSamplePosition());
-			this.aoFreq = getFrequency();
+		public FreqAutomation(Flanger target) {
+			super(target.state, XML_ELEMENT_NAME,
+					target.state.getSamplePosition(), target.getFrequency());
+			this.target = target;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
-		 * @see com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio.AudioTrack)
+		 * @see
+		 * com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio
+		 * .AudioTrack)
 		 */
 		@Override
 		protected void executeImpl(AudioTrack aTrack) {
-			if (state == null) return;
-			setFrequency(aoFreq);
-			updateGUIFreq();
+			if (target == null) {
+				// try to derive the target
+				if (owner != null && owner.getOwner() != null) {
+					target = (Flanger) owner.getOwner().getEffect(Flanger.class);
+				}
+				if (target == null || target.state == null) return;
+			}
+			target.setFrequency(value);
+			target.updateGUIFreq();
 		}
 
 		/**
@@ -743,33 +861,50 @@ public class Flanger extends GUIEffectsBase {
 		 */
 		@Override
 		public String toString() {
-			return super.toString() + ", frequency=" + aoFreq;
+			return super.toString() + ", frequency=" + value;
 		}
 	}
 
 	/** the automation object to record a change in feedback */
-	private class FeedbackAutomation extends AutomationObject {
-		private double aoFeedback;
+	public static class FeedbackAutomation extends AutomationObjectDouble {
+		private static final String XML_ELEMENT_NAME = "FlangerFeedback";
+		private Flanger target;
+
+		/**
+		 * Create an instance with default values, should only be used before
+		 * xml import.
+		 */
+		public FeedbackAutomation() {
+			super(null, XML_ELEMENT_NAME, 0, 0.6);
+		}
 
 		/**
 		 * Create a feedback automation object capturing the current playback
 		 * time and the current feedback.
 		 */
-		public FeedbackAutomation() {
-			super(state, state.getSamplePosition());
-			this.aoFeedback = getFeedback();
+		public FeedbackAutomation(Flanger target) {
+			super(target.state, XML_ELEMENT_NAME,
+					target.state.getSamplePosition(), target.getFeedback());
+			this.target = target;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
-		 * @see com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio.AudioTrack)
+		 * @see
+		 * com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio
+		 * .AudioTrack)
 		 */
 		@Override
 		protected void executeImpl(AudioTrack aTrack) {
-			if (state == null) return;
-			setFeedback(aoFeedback);
-			updateGUIFeedback();
+			if (target == null) {
+				// try to derive the target
+				if (owner != null && owner.getOwner() != null) {
+					target = (Flanger) owner.getOwner().getEffect(Flanger.class);
+				}
+				if (target == null || target.state == null) return;
+			}
+			target.setFeedback(value);
+			target.updateGUIFeedback();
 		}
 
 		/**
@@ -778,33 +913,50 @@ public class Flanger extends GUIEffectsBase {
 		 */
 		@Override
 		public String toString() {
-			return super.toString() + ", feedback=" + aoFeedback;
+			return super.toString() + ", feedback=" + value;
 		}
 	}
 
 	/** the automation object to record a change in balance */
-	private class BalanceAutomation extends AutomationObject {
-		private double aoBalance;
+	public static class BalanceAutomation extends AutomationObjectDouble {
+		private static final String XML_ELEMENT_NAME = "FlangerBalance";
+		private Flanger target;
+
+		/**
+		 * Create an instance with default values, should only be used before
+		 * xml import.
+		 */
+		public BalanceAutomation() {
+			super(null, XML_ELEMENT_NAME, 0, 0.0);
+		}
 
 		/**
 		 * Create a balance automation object capturing the current playback
 		 * time and the current balance.
 		 */
-		public BalanceAutomation() {
-			super(state, state.getSamplePosition());
-			this.aoBalance = getBalance();
+		public BalanceAutomation(Flanger target) {
+			super(target.state, XML_ELEMENT_NAME,
+					target.state.getSamplePosition(), target.getBalance());
+			this.target = target;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
-		 * @see com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio.AudioTrack)
+		 * @see
+		 * com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio
+		 * .AudioTrack)
 		 */
 		@Override
 		protected void executeImpl(AudioTrack aTrack) {
-			if (state == null) return;
-			setBalance(aoBalance);
-			updateGUIBalance();
+			if (target == null) {
+				// try to derive the target
+				if (owner != null && owner.getOwner() != null) {
+					target = (Flanger) owner.getOwner().getEffect(Flanger.class);
+				}
+				if (target == null || target.state == null) return;
+			}
+			target.setBalance(value);
+			target.updateGUIBalance();
 		}
 
 		/**
@@ -813,7 +965,7 @@ public class Flanger extends GUIEffectsBase {
 		 */
 		@Override
 		public String toString() {
-			return super.toString() + ", balance=" + aoBalance;
+			return super.toString() + ", balance=" + value;
 		}
 	}
 

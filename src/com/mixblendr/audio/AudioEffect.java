@@ -12,6 +12,9 @@ import org.tritonus.share.sampled.*;
  */
 public interface AudioEffect {
 
+	/** the XML tag name to use for exporting audio effect instances */
+	public final static String EXPORT_XML_NAME = "AudioEffect";
+	
 	/** called by the audio system to initialize this effect instance */
 	public void init(AudioState state, AudioTrack track);
 

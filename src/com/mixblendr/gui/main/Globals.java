@@ -28,7 +28,14 @@ public class Globals implements ChangeListener {
 
 	private static final boolean DEBUG = true;
 	final static boolean DEBUG_DRAG_SCROLL = false;
+	
+	/** the extension to use for loaded/saved files */
+	public static String SAVED_FILES_EXTENSION = ".mixblendr";
 
+	/** if saving to a local file is possible. */
+	public static boolean CAN_SAVE_TO_LOCAL_FILE = true;
+	/** if loading from a local file is possible. */
+	public static boolean CAN_LOAD_FROM_LOCAL_FILE = true;
 	/** if publishing to a local file is possible. */
 	public static boolean CAN_PUBLISH_TO_LOCAL_FILE = true;
 

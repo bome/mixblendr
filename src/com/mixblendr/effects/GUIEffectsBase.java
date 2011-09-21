@@ -12,6 +12,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.tritonus.share.sampled.FloatSampleBuffer;
+import org.w3c.dom.Element;
+
 import com.mixblendr.audio.*;
 
 import static com.mixblendr.util.GUIUtils.*;
@@ -37,7 +39,7 @@ public abstract class GUIEffectsBase extends JFrame implements AudioEffect,
 	 */
 	protected Object lock = new Object();
 
-	/** private default constructor to prevent instanciation without name */
+	/** private default constructor to prevent instantiation without name */
 	@SuppressWarnings("unused")
 	private GUIEffectsBase() {
 		this("");
@@ -242,6 +244,33 @@ public abstract class GUIEffectsBase extends JFrame implements AudioEffect,
 	 * Called when the user or the implementation moves a slider
 	 */
 	public abstract void stateChanged(ChangeEvent e);
+
+	// PERSISTENCE
+
+	/**
+	 * Base implementation of xmlExport(). Subclasses need to implement
+	 * XmlPersistent to be available for persistence.
+	 */
+	public Element xmlExport(Element element) {
+		if (!element.getTagName().equals(EXPORT_XML_NAME)) {
+			element = (Element) element.appendChild(element.getOwnerDocument().createElement(EXPORT_XML_NAME));
+		}
+		element.setAttribute("Name", getShortName());
+		element.setAttribute("Class", getClass().getName());
+		return element;
+	}
+
+	/**
+	 * Base implementation of xmlImport(). Subclasses need to implement
+	 * XmlPersistent to be available for persistence.
+	 */
+	public void xmlImport(Element element) throws Exception {
+		if (!element.getTagName().equals(EXPORT_XML_NAME)) {
+			throw new Exception("internal error: audio effect parser");
+		}
+		setShortName(element.getAttribute("Name"));
+	}
+
 
 	/* satisfy compiler */
 	private static final long serialVersionUID = 0;

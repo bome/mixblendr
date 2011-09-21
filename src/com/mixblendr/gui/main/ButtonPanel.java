@@ -54,6 +54,8 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 	MButton rewind;
 	MButton play;
 	MButton publish;
+	MButton save;
+	MButton load;
 	MButton fastForward;
 	MToggle loop;
 
@@ -82,6 +84,8 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 		scissorTool = getToggle(builder, "scissor");
 		rewind = getButton(builder, "rewind");
 		play = getButton(builder, "play");
+		save = getButton(builder, "save", true);
+		load = getButton(builder, "load", true);
 		publish = getButton(builder, "publish", true);
 		fastForward = getButton(builder, "fastForward");
 		loop = getToggle(builder, "loop");
@@ -278,6 +282,11 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 			onWindToMeasure(false);
 		} else if (src == play) {
 			onPlay();
+		} else if (src == save) {
+			// by default, save to web
+			onSave(!ctrl);
+		} else if (src == load) {
+			onLoad(!ctrl);
 		} else if (src == publish) {
 			onPublish(!ctrl);
 		} else if (src == fastForward) {
@@ -618,6 +627,19 @@ class ButtonPanel implements ActionListener, AudioPlayer.Listener,
 	public void onPlay() {
 		// will trigger call onPlaybackStart or onPlaybackStop
 		getGlobals().togglePlayback();
+	}
+
+	/** action upon pressing the Save button */
+	public void onSave(boolean toWeb) {
+		LoadSave ls = new LoadSave(getGlobals());
+		ls.save(toWeb);
+	}
+
+	/** action upon pressing the Load button */
+	public void onLoad(boolean toWeb) {
+		LoadSave ls = new LoadSave(getGlobals());
+		ls.load(toWeb);
+		main.updateAll();
 	}
 
 	/** action upon pressing the Publish button */

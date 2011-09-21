@@ -3,7 +3,10 @@
  */
 package com.mixblendr.audio;
 
+import java.net.URL;
+
 import org.tritonus.share.sampled.*;
+import org.w3c.dom.Element;
 
 import static com.mixblendr.util.Debug.*;
 
@@ -18,6 +21,9 @@ public class AudioRegion extends AutomationObject implements
 		AudioFileURL.Listener, Cloneable {
 
 	private final static boolean TRACE = false;
+
+	/** the XML element when exporting/importing this region */
+	public final static String EXPORT_XML_ELEMENT = "Region";
 
 	public static enum State {
 		DOWNLOAD_START, DOWNLOAD_PROGRESS, DOWNLOAD_END
@@ -34,6 +40,24 @@ public class AudioRegion extends AutomationObject implements
 
 	/** the current read position, 0 to duration */
 	private long playbackPos;
+	
+	/** if true, this region is muted and the read() method will return silence */
+	private boolean muted;
+	
+	/** the linear level of this region (0.0 ... 1.0), by default it's 1.0 */
+	private double level;
+
+	static {
+		AutomationManager.registerXML(AudioRegion.class, EXPORT_XML_ELEMENT);
+	}
+	
+	/**
+	 * Create an instance with default values, should only be used for
+	 * xml import.
+	 */
+	AudioRegion() {
+		this(null, (AudioFile) null);
+	}
 
 	/**
 	 * Create a new audio region object, initially empty.
@@ -45,9 +69,20 @@ public class AudioRegion extends AutomationObject implements
 		this.audioFileOffset = 0;
 		this.duration = (audioFile!=null)?audioFile.getDurationSamples():-1;
 		this.playbackPos = 0;
+		this.muted = false;
+		this.level = 1.0;
 		setAudioFile(audioFile);
 	}
-
+	
+	/**
+	 * Create a new region from the XML element. The element should
+	 * be named like EXPORT_XML_ELEMENT.
+	 */
+	public AudioRegion(AudioState state, Element element) throws Exception {
+		this(state, (AudioFile) null);
+		xmlImport(element);
+	}
+	
 	/** create a cloned copy of this region */
 	@Override
 	public Object clone() {
@@ -65,6 +100,8 @@ public class AudioRegion extends AutomationObject implements
 			ar.duration = duration;
 			ar.audioFileOffset = audioFileOffset;
 			ar.playbackPos = playbackPos;
+			ar.level = level;
+			ar.muted = muted;
 		}
 	}
 
@@ -199,6 +236,36 @@ public class AudioRegion extends AutomationObject implements
 		this.playbackPos = pos;
 		if (TRACE) debug("AudioRegion: set playbackPos to " + pos);
 	}
+	
+	
+	/**
+	 * @return true if this region is muted
+	 */
+	public boolean isMuted() {
+		return muted;
+	}
+
+	/**
+	 * @param muted set to true to mute this region
+	 */
+	public void setMuted(boolean muted) {
+		this.muted = muted;
+	}
+
+	/**
+	 * @return the linear level of this region, 0.0 .. 1.0
+	 */
+	public double getLevel() {
+		return level;
+	}
+
+	/**
+	 * Set the level of this region.
+	 * @param level the level to set, 0.0 ... 1.0
+	 */
+	public void setLevel(double level) {
+		this.level = level;
+	}
 
 	/**
 	 * Determine if this region has played out. This is usually called during
@@ -229,6 +296,27 @@ public class AudioRegion extends AutomationObject implements
 	}
 
 	/**
+	 * @param buffer the buffer to apply the region's level
+	 * @param offset offset in buffer where to start applying the level
+	 * @param count number of samples to process
+	 */
+	private final void applyLevel(FloatSampleBuffer buffer, int offset, int count) {
+		if (level == 0.0 || muted) {
+			buffer.makeSilence(offset, count);
+		} else {
+			final int cc = buffer.getChannelCount();
+			final int endPos = offset + count;
+			final float lev = (float) level;
+			for (int c = 0; c < cc; c++) {
+				float[] channel = buffer.getChannel(c);
+				for (int p = offset; p < endPos; p++) {
+					channel[p] *= lev;
+				}
+			}
+		}
+	}
+
+	/**
 	 * Fill a buffer with a linearly faded in buffer of samples that occur prior
 	 * to the actual start of this region. The entire buffer is overwritten,
 	 * even if the pre-load portion is too small to fill the entire buffer.
@@ -244,6 +332,8 @@ public class AudioRegion extends AutomationObject implements
 		}
 		if (count > 0) {
 			af.read(audioFileOffset - count, buffer, offset, count);
+			// apply level&mute
+			applyLevel(buffer, offset, count);
 			// now fade in
 			buffer.linearFade(0f, 1f, offset, count);
 		}
@@ -273,6 +363,8 @@ public class AudioRegion extends AutomationObject implements
 		}
 		if (count > 0) {
 			af.read(audioFileOffset + thisSampleCount, buffer, offset, count);
+			// apply level and mute
+			applyLevel(buffer, offset, count);
 			// now fade out
 			buffer.linearFade(1f, 0f, offset, count);
 		}
@@ -324,6 +416,8 @@ public class AudioRegion extends AutomationObject implements
 					// nothing written
 					canWrite = 0;
 				} else {
+					// apply level and mute
+					applyLevel(buffer, offset, canWrite);
 					if (TRACE) {
 						debug("AudioRegion: Read " + canWrite
 								+ " samples from " + af + " at position "
@@ -418,6 +512,74 @@ public class AudioRegion extends AutomationObject implements
 			}
 		}
 	}
+	
+	// PERSISTENCE
+	
+	@Override
+	public Element xmlExport(Element element) {
+		element = super.xmlExport(element, EXPORT_XML_ELEMENT);
+		if (af != null) {
+			element.setAttribute("File", af.getSource());
+		}
+		if (audioFileOffset != 0) {
+			element.setAttribute("FileOffset", String.valueOf(audioFileOffset));
+		}
+		if (duration != -1) {
+			element.setAttribute("Duration", String.valueOf(duration));
+		}
+		if (muted) {
+			/** if true, this region is muted and the read() method will return silence */
+			element.setAttribute("Muted", "yes");
+		}
+		if (level != 1.0) {
+			element.setAttribute("Level", String.valueOf(level));
+		}
+		return element;
+	}
+
+	
+	/*
+	 * (non-Javadoc)
+	 * @see com.mixblendr.audio.AutomationObject#xmlImport(org.w3c.dom.Element)
+	 */
+	@Override
+	public void xmlImport(Element element) throws Exception {
+		removeAudioFileDependency();
+
+		element = super.xmlImport(element, EXPORT_XML_ELEMENT);
+
+		String val = element.getAttribute("File");
+		if (val.length() > 0) {
+			setAudioFile(getState().getAudioFileFactory().getAudioFile(new URL(val)));
+		} else {
+			setAudioFile(null);
+		}
+		val = element.getAttribute("FileOffset");
+		if (val.length() > 0) {
+			setAudioFileOffset(Long.parseLong(val));
+		} else {
+			setAudioFileOffset(0);
+		}
+		val = element.getAttribute("Duration");
+		if (val.length() > 0) {
+			setDuration(Long.parseLong(val));
+		} else {
+			setDuration(-1);
+		}
+		val = element.getAttribute("Muted");
+		if (val.length() > 0 && (val.charAt(0) == 'y' || val.charAt(0) == 't' || val.charAt(0) == '1')) {
+			setMuted(true);
+		} else {
+			setMuted(false);
+		}
+		val = element.getAttribute("Level");
+		if (val.length() > 0) {
+			setLevel(Double.parseDouble(val));
+		} else {
+			setLevel(1.0);
+		}
+	}
+
 
 	@Override
 	public String toString() {

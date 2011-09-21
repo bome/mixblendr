@@ -35,6 +35,10 @@ class Performance {
 		preload("org.tritonus.sampled.convert.javalayer.MpegFormatConversionProvider");
 		preload("org.tritonus.sampled.file.mpeg.MpegAudioFileReader");
 		preload("javazoom.jl.decoder.Decoder");
+		// and some more needed for automation object loading from xml
+		preload("com.mixblendr.audio.AudioRegion");
+		preload("com.mixblendr.automation.AutomationPan");
+		preload("com.mixblendr.automation.AutomationVolume");
 	}
 
 	/** set the OS's default UI */

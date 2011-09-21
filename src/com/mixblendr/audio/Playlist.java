@@ -6,6 +6,13 @@ package com.mixblendr.audio;
 import java.util.*;
 
 import org.tritonus.share.sampled.FloatSampleBuffer;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.mixblendr.util.Debug;
+import com.mixblendr.util.XmlPersistent;
+
 import static com.mixblendr.util.Debug.*;
 
 /**
@@ -16,11 +23,14 @@ import static com.mixblendr.util.Debug.*;
 // IDEA: use interpolation search in indexOf()
 // IDEA: or use own class for "elements", using interpolation search for
 // indexOf().
-public class Playlist implements AudioInput {
+public class Playlist implements AudioInput, XmlPersistent {
 
 	private final static boolean TRACE_FADE = false;
 
 	private final static boolean DEBUG_PLAYLIST = false;
+
+	/** the XML element when exporting/importing this track */
+	public final static String EXPORT_XML_ELEMENT = "Playlist";
 
 	private AudioState state;
 
@@ -635,6 +645,65 @@ public class Playlist implements AudioInput {
 			}
 		}
 		return ret;
+	}
+	
+	// PERSISTENCE
+
+	/* (non-Javadoc)
+	 * @see com.mixblendr.util.XmlPersistent#xmlExport(org.w3c.dom.Element)
+	 */
+	public Element xmlExport(Element element) {
+		if (!element.getTagName().equals(EXPORT_XML_ELEMENT)) {
+			element = (Element) element.appendChild(element.getOwnerDocument().createElement(EXPORT_XML_ELEMENT));
+		}
+		synchronized(this) {
+			for (AutomationObject ao : elements) {
+				ao.xmlExport(element);
+			}
+		}
+		return element;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.mixblendr.util.XmlPersistent#xmlImport(org.w3c.dom.Element)
+	 */
+	@SuppressWarnings("rawtypes")
+	public void xmlImport(Element element) throws Exception {
+		assert (element.getTagName().equals(EXPORT_XML_ELEMENT));
+		// go through all child elements
+		NodeList nodes = element.getChildNodes();
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+			if (node.getNodeType() == Node.ELEMENT_NODE) {
+				Element child = (Element) node;
+				String tagName = child.getTagName();
+				// find an automation object instance
+				AutomationObject ao = null;
+				try {
+					Class clazz = AutomationManager.getAutomationClassFromXmlName(tagName);
+					if (clazz != null) {
+						Object o = clazz.newInstance();
+						if (o instanceof AutomationObject) {
+							ao = (AutomationObject) o;
+						}
+					}
+				} catch (Exception e) {
+					Debug.debug(e);
+				}
+				if (ao != null) {
+					ao.setState(getState());
+					ao.xmlImport(child);
+					synchronized(this) {
+						ao.setOwner(this);
+						elements.add(ao);
+					}
+				} else {
+					Debug.error("Cannot use automation object '" + tagName
+							+ "'.");
+				}
+			}
+		}
 	}
 
 }

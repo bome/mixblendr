@@ -1,5 +1,5 @@
 /*
- * $Id: CountingInputStream.java 42 2011-05-22 08:41:25Z florian $
+ * $Id: $
  *
  * (c) by Bome Software
  * All rights reserved.

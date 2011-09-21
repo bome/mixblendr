@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="WINDOWS-1252" standalone="no"?>
 <jardesc>
     <jar path="U:/htdocs/nervesound/mixblendr.jar"/>
-    <options buildIfNeeded="true" compress="true" descriptionLocation="/mixblendr/CreateJarOnWeb.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/mixblendr/CreateJarOnWeb.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="true" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
     <manifest generateManifest="false" manifestLocation="/mixblendr/Manifest.mf" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
@@ -12,13 +12,13 @@
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.test{AudioFileRenamer.java"/>
-        <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.util"/>
         <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.effects"/>
+        <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.util"/>
         <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.skin"/>
-        <folder path="/mixblendr/skins/main"/>
         <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.audio"/>
         <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.automation"/>
         <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.gui.main"/>
         <javaElement handleIdentifier="=mixblendr/src&lt;com.mixblendr.gui.graph"/>
+        <javaElement handleIdentifier="=mixblendr/skins&lt;main"/>
     </selectedElements>
 </jardesc>

@@ -604,6 +604,7 @@ public class Main implements FatalExceptionListener, AutomationListener,
 			debug("Loading track 1 with bass");
 			AudioTrack at = player.addAudioTrack();
 			globals.addRegion(at, new URL(SOUNDS_URL + "Bass1" + ext), 0);
+			/*
 			globals.addRegion(at, new URL(SOUNDS_URL + "Bass2" + ext),
 					QUARTER_BEAT * 4);
 			globals.addRegion(at, new URL(SOUNDS_URL + "Bass1" + ext),
@@ -634,6 +635,7 @@ public class Main implements FatalExceptionListener, AutomationListener,
 			lastText.setAudioFileOffset(lastText.getAudioFileOffset()
 					+ (QUARTER_BEAT * 4));
 			lastText.setDuration(QUARTER_BEAT * 4);
+			*/
 			updateTracks();
 			player.setLoopSamples(QUARTER_BEAT * 4, QUARTER_BEAT * 4);
 			buttonPanel.displayLoop(false);

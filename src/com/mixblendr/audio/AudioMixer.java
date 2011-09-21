@@ -3,13 +3,31 @@
  */
 package com.mixblendr.audio;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.tritonus.share.sampled.FloatSampleBuffer;
 import org.tritonus.share.sampled.FloatSampleInput;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.mixblendr.audio.AudioTrack.SoloState;
+import com.mixblendr.util.XmlPersistent;
 
 import static com.mixblendr.util.Debug.*;
 
@@ -19,11 +37,16 @@ import static com.mixblendr.util.Debug.*;
  * 
  * @author Florian Bomers
  */
-public class AudioMixer implements FloatSampleInput {
+public class AudioMixer implements FloatSampleInput, XmlPersistent {
 
 	private final static boolean TRACE = false;
 	private final static boolean TRACE_FADE = false;
 	private final static boolean DEBUG_LOOPING = false;
+
+	/** the zipped filename in the zipped .mixblendr output file */
+	private static final String EXPORT_XML_ZIP_ENTRIES = "mixblendr.xml";
+	/** the root XML element when exporting/importing the timeline */
+	public static String EXPORT_XML_ROOT_ELEMENT = "Mixblendr";
 
 	/** list of tracks that are read from */
 	private List<AudioTrack> tracks;
@@ -528,4 +551,138 @@ public class AudioMixer implements FloatSampleInput {
 		read(buffer, 0, buffer.getSampleCount());
 	}
 
+	// PERSISTENCE
+	
+	/**
+	 * Export the tracks and their contents to an XML file. If file exists, it
+	 * is overwritten. Throws an exception on error.
+	 * 
+	 * @throws IOException on i/o error
+	 * @throws ParserConfigurationException on XML error
+	 * @throws TransformerException
+	 * @throws TransformerFactoryConfigurationError
+	 */
+	public void xmlExport(File file) throws IOException,
+			ParserConfigurationException, TransformerFactoryConfigurationError,
+			TransformerException {
+		OutputStream os = new FileOutputStream(file);
+		try {
+			xmlExport(os);
+		} finally {
+			os.close();
+		}
+	}
+
+	/**
+	 * Export the tracks and their contents to an XML file. Throws an exception
+	 * on error. The stream is not closed by this implementation, but since
+	 * binary data (ZIP) is written, you should not prepend or append any data
+	 * to it.
+	 */
+	public void xmlExport(OutputStream stream)
+			throws ParserConfigurationException,
+			TransformerFactoryConfigurationError, TransformerException, IOException {
+		ZipOutputStream zip = new ZipOutputStream(stream);
+		zip.putNextEntry(new ZipEntry(EXPORT_XML_ZIP_ENTRIES));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.newDocument();
+		Element root = doc.createElement(EXPORT_XML_ROOT_ELEMENT);
+		xmlExport(root);
+		doc.appendChild(root);
+
+		// write to file using transformer
+		Source source = new DOMSource(doc);
+		Result result = new StreamResult(zip);
+		Transformer transformer = TransformerFactory.newInstance().newTransformer();
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		transformer.transform(source, result);
+		zip.closeEntry();
+		zip.finish();
+		zip.flush();
+	}
+
+	/**
+	 * Export the state and the entire timeline to the given element.
+	 * 
+	 * @param element the element to export to
+	 * @see com.mixblendr.util.XmlPersistent#xmlImport(org.w3c.dom.Element)
+	 */
+	public synchronized Element xmlExport(Element element) {
+		if (!element.getTagName().equals(EXPORT_XML_ROOT_ELEMENT)) {
+			element = (Element) element.appendChild(element.getOwnerDocument().createElement(
+					EXPORT_XML_ROOT_ELEMENT));
+		}
+		element.getOwnerDocument().createComment("Exported " + (new Date()).toString());
+		state.xmlExport(element);
+		for (AudioTrack t : tracks) {
+			t.xmlExport(element);
+		}
+		return element;
+	}
+
+	/**
+	 * Import all tracks and their contents from an XML file. At first, all
+	 * tracks and settings of this mixer are deleted. Throws an exception on
+	 * error.
+	 */
+	public void xmlImport(File file) throws Exception {
+		InputStream is = new FileInputStream(file);
+		try {
+			xmlImport(is);
+		} finally {
+			is.close();
+		}
+	}
+
+	/**
+	 * Import all tracks and their contents from an XML file. At first, all
+	 * tracks and settings of this mixer are deleted. The stream is not closed
+	 * after reading it. Throws an exception on error.
+	 */
+	public void xmlImport(InputStream stream) throws Exception {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		ZipInputStream zip = new ZipInputStream(stream);
+		while (true) {
+			ZipEntry entry = zip.getNextEntry();
+			if (entry == null) {
+				throw new Exception("Not a valid " + EXPORT_XML_ROOT_ELEMENT + " file.");
+			}
+			if (entry.getName().equalsIgnoreCase(EXPORT_XML_ZIP_ENTRIES)) {
+				Document doc = builder.parse(zip);
+				xmlImport(doc.getDocumentElement());
+				break;
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.mixblendr.util.XmlPersistent#xmlImport(org.w3c.dom.Element)
+	 */
+	public void xmlImport(Element element) throws Exception {
+		assert (element.getTagName().equals(EXPORT_XML_ROOT_ELEMENT));
+		clear();
+
+		// go through all child elements
+		NodeList nodes = element.getChildNodes();
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+			if (node.getNodeType() == Node.ELEMENT_NODE) {
+				Element child = (Element) node;
+				if (child.getTagName().equalsIgnoreCase(
+						AudioState.EXPORT_XML_ELEMENT)) {
+					// read state
+					state.xmlImport(child);
+				} else if (child.getTagName().equalsIgnoreCase(
+						AudioTrack.EXPORT_XML_ELEMENT)) {
+					// read track
+					addTrack(new AudioTrack(state, child));
+				}
+			}
+		}
+		updateSoloState();
+	}
 }

@@ -11,6 +11,12 @@ import java.util.List;
 
 import org.tritonus.share.sampled.AudioUtils;
 import org.tritonus.share.sampled.FloatSampleBuffer;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.mixblendr.util.Debug;
+import com.mixblendr.util.XmlPersistent;
 
 /**
  * Class that manages all the components of a track: volume, balance, mute,
@@ -19,7 +25,10 @@ import org.tritonus.share.sampled.FloatSampleBuffer;
  * 
  * @author Florian Bomers
  */
-public class AudioTrack {
+public class AudioTrack implements XmlPersistent {
+
+	/** the XML element when exporting/importing this track */
+	public final static String EXPORT_XML_ELEMENT = "Track";
 
 	/**
 	 * the different states for SOLO mode: no solo mode, or this track is solo,
@@ -94,6 +103,14 @@ public class AudioTrack {
 		automationEnabled = false;
 		calcEffectiveVolume();
 		applyEffVolToLastEffVol();
+	}
+
+	/**
+	 * Create a new empty audio track and initialize it from the given XML element.
+	 */
+	public AudioTrack(AudioState state, Element xml) throws Exception {
+		this(state);
+		xmlImport(xml);
 	}
 
 	/**
@@ -574,6 +591,137 @@ public class AudioTrack {
 		}
 		// calculate volume level and store in rotating array
 		handlePeak(getMaxLevel(buffer));
+	}
+
+	// PERSISTENCE
+	
+	/**
+	 * Create a child of element named EXPORT_XML_ELEMENT and include all
+	 * attributes and timeline objects.
+	 * 
+	 * @param element the element to export to
+	 * @see com.mixblendr.util.XmlPersistent#xmlExport(org.w3c.dom.Element)
+	 */
+	public synchronized Element xmlExport(Element element) {
+		if (!element.getTagName().equals(EXPORT_XML_ELEMENT)) {
+			element = (Element) element.appendChild(element.getOwnerDocument().createElement(
+					EXPORT_XML_ELEMENT));
+		}
+		if (!name.equals("Track " + ID)) {
+			element.setAttribute("Name", name);
+		}
+		if (volume != 1.0) {
+			element.setAttribute("Level", String.valueOf(volume));
+		}
+		if (balance != 0.0) {
+			element.setAttribute("Balance", String.valueOf(balance));
+		}
+		if (mute) {
+			element.setAttribute("Muted", "yes");
+		}
+		if (solo == SoloState.SOLO) {
+			element.setAttribute("Solo", "yes");
+		}
+		for (AudioEffect ae : effects) {
+			if (ae instanceof XmlPersistent) {
+				((XmlPersistent) ae).xmlExport(element);
+			}
+		}
+		playlist.xmlExport(element);
+		return element;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.mixblendr.util.XmlPersistent#xmlImport(org.w3c.dom.Element)
+	 */
+	@SuppressWarnings("rawtypes")
+	public void xmlImport(Element element) throws Exception {
+		assert (element.getTagName().equals(EXPORT_XML_ELEMENT));
+		clearEffects();
+		String val = element.getAttribute("Name");
+		if (val.length() > 0) {
+			name = val;
+		} else {
+			name = "Track " + ID;
+		}
+		val = element.getAttribute("Level");
+		if (val.length() > 0) {
+			setVolume(Double.parseDouble(val));
+		} else {
+			setVolume(1.0);
+		}
+		val = element.getAttribute("Balance");
+		if (val.length() > 0) {
+			setBalance(Double.parseDouble(val));
+		} else {
+			setBalance(0.0);
+		}
+		val = element.getAttribute("Muted");
+		if (val.length() > 0
+				&& (val.charAt(0) == 'y' || val.charAt(0) == 't' || val.charAt(0) == '1')) {
+			setMute(true);
+		} else {
+			setMute(false);
+		}
+		val = element.getAttribute("Solo");
+		if (val.length() > 0
+				&& (val.charAt(0) == 'y' || val.charAt(0) == 't' || val.charAt(0) == '1')) {
+			setSoloImpl(SoloState.SOLO);
+		} else {
+			setSoloImpl(SoloState.NONE);
+		}
+
+		// now go through all child elements
+		NodeList nodes = element.getChildNodes();
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+			if (node.getNodeType() == Node.ELEMENT_NODE) {
+				Element child = (Element) node;
+				if (child.getTagName().equalsIgnoreCase(
+						AudioEffect.EXPORT_XML_NAME)) {
+					//
+					// read Audio Effect
+					//
+					AudioEffect ae = null;
+					String effectName = "";
+					try {
+						effectName = child.getAttribute("Name");
+						String className = child.getAttribute("Class");
+						if (effectName.length() == 0) {
+							effectName = className;
+							if (effectName.length() == 0) {
+								effectName = "(unnamed)";
+							}
+						}
+						if (className.length() > 0) {
+							Class clazz = Class.forName(className);
+							Object o = clazz.newInstance();
+							if (o instanceof AudioEffect) {
+								ae = (AudioEffect) o;
+							}
+						}
+					} catch (Exception e) {
+						// ignore
+					}
+					if (ae != null) {
+						ae.init(state, this);
+						if (ae instanceof XmlPersistent) {
+							((XmlPersistent) ae).xmlImport(child);
+						}
+						addEffect(ae);
+					} else {
+						Debug.error("Cannot find effect '" + effectName + "'.");
+					}
+				} else if (child.getTagName().equalsIgnoreCase(
+						Playlist.EXPORT_XML_ELEMENT)) {
+					//
+					// read playlist
+					//
+					playlist.xmlImport(child);
+				}
+			}
+		}
 	}
 
 	/** @return a String representation of this track, e.g. &quot;Track 1&quot; */

@@ -17,12 +17,11 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 
 import org.tritonus.share.sampled.FloatSampleBuffer;
+import org.w3c.dom.Element;
 
-import com.mixblendr.audio.AudioTrack;
-import com.mixblendr.audio.AutomationHandler;
-import com.mixblendr.audio.AutomationManager;
-import com.mixblendr.audio.AutomationObject;
+import com.mixblendr.audio.*;
 import com.mixblendr.util.GUIUtils;
+import com.mixblendr.util.XmlPersistent;
 
 /**
  * A new approach to the delay effect. Compresses the delay buffer when changing
@@ -30,7 +29,7 @@ import com.mixblendr.util.GUIUtils;
  * 
  * @author Florian Bomers
  */
-public class Delay2 extends GUIEffectsBase {
+public class Delay2 extends GUIEffectsBase implements XmlPersistent {
 
 	private static final boolean DEBUG_DELAY2 = false;
 
@@ -57,6 +56,12 @@ public class Delay2 extends GUIEffectsBase {
 	private static AutomationHandler delayTimeHandler = AutomationManager.getHandler(DelayTimeAutomation.class);
 	private static AutomationHandler feedbackHandler = AutomationManager.getHandler(FeedbackAutomation.class);
 	private static AutomationHandler balanceHandler = AutomationManager.getHandler(BalanceAutomation.class);
+
+	static {
+		AutomationManager.registerXML(DelayTimeAutomation.class, DelayTimeAutomation.XML_ELEMENT_NAME);
+		AutomationManager.registerXML(FeedbackAutomation.class, FeedbackAutomation.XML_ELEMENT_NAME);
+		AutomationManager.registerXML(BalanceAutomation.class, BalanceAutomation.XML_ELEMENT_NAME);
+	}
 
 	/** create a new instance of the Delay effect */
 	public Delay2() {
@@ -246,6 +251,8 @@ public class Delay2 extends GUIEffectsBase {
 	private SliderStrip sDelayTime;
 	private SliderStrip sFeedback;
 	private SliderStrip sBalance;
+	private boolean guiInited = false;
+
 	/**
 	 * if this flag is non-zero, controls are currently set programmatically
 	 * rather than from user interaction
@@ -276,6 +283,7 @@ public class Delay2 extends GUIEffectsBase {
 				"full")));
 		main.add((sBalance = new SliderStrip("Balance:", -100, 100, 0, "dry",
 				"wet")));
+		guiInited = true;
 
 		// init labels
 		updateGUIDelayTimeLabel();
@@ -285,6 +293,7 @@ public class Delay2 extends GUIEffectsBase {
 
 	/** update the GUI with the current delay time */
 	protected void updateGUIDelayTime() {
+		if (!guiInited) return;
 		int index = -1;
 		for (int i = 0; i < DELAY_TIME_BEAT_FRACTIONS.length; i++) {
 			if (delayTimeBeats <= DELAY_TIME_BEAT_FRACTIONS[i]) {
@@ -309,17 +318,20 @@ public class Delay2 extends GUIEffectsBase {
 	 * accordingly
 	 */
 	protected void updateDelayTimeFromGUI() {
+		if (!guiInited) return;
 		int index = sDelayTime.slider.getValue();
 		setDelayTimeBeats(DELAY_TIME_BEAT_FRACTIONS[index]);
 	}
 
 	/** update the label of the with the current delay time */
 	private void updateGUIDelayTimeLabel() {
+		if (!guiInited) return;
 		sDelayTime.label.setText(DELAY_TIME_BEAT_CAPTIONS[sDelayTime.slider.getValue()]);
 	}
 
 	/** update the GUI with the current feedback */
 	protected void updateGUIFeedback() {
+		if (!guiInited) return;
 		// will cause change event and update the label
 		noUpdate++;
 		try {
@@ -334,18 +346,21 @@ public class Delay2 extends GUIEffectsBase {
 	 * accordingly
 	 */
 	protected void updateFeedbackFromGUI() {
+		if (!guiInited) return;
 		int index = sFeedback.slider.getValue();
 		setFeedback(index / 100.0);
 	}
 
 	/** update the label of the with the current feedback */
 	private void updateGUIFeedbackLabel() {
+		if (!guiInited) return;
 		sFeedback.label.setText(Integer.toString(sFeedback.slider.getValue())
 				+ " %");
 	}
 
 	/** update the GUI with the current balance */
 	protected void updateGUIBalance() {
+		if (!guiInited) return;
 		// will cause change event and update the label
 		noUpdate++;
 		try {
@@ -360,12 +375,14 @@ public class Delay2 extends GUIEffectsBase {
 	 * accordingly
 	 */
 	protected void updateBalanceFromGUI() {
+		if (!guiInited) return;
 		int index = sBalance.slider.getValue();
 		setBalance(index / 100.0);
 	}
 
 	/** update the label of the with the current balance */
 	private void updateGUIBalanceLabel() {
+		if (!guiInited) return;
 		sBalance.label.setText(Integer.toString(sBalance.slider.getValue())
 				+ " %");
 	}
@@ -379,11 +396,11 @@ public class Delay2 extends GUIEffectsBase {
 	private void addAutomationEvent(Object src) {
 		if ((track != null) && track.isAutomationEnabled()) {
 			if (src == sDelayTime.slider) {
-				track.addAutomationObject(new DelayTimeAutomation());
+				track.addAutomationObject(new DelayTimeAutomation(this));
 			} else if (src == sFeedback.slider) {
-				track.addAutomationObject(new FeedbackAutomation());
+				track.addAutomationObject(new FeedbackAutomation(this));
 			} else if (src == sBalance.slider) {
-				track.addAutomationObject(new BalanceAutomation());
+				track.addAutomationObject(new BalanceAutomation(this));
 			}
 		}
 	}
@@ -455,33 +472,79 @@ public class Delay2 extends GUIEffectsBase {
 			addAutomationEvent(src);
 		}
 	}
+	
+	// PERSISTENCE
+
+	@Override
+	public Element xmlExport(Element element) {
+		element = super.xmlExport(element);
+		element.setAttribute("DelayTimeBeats", String.valueOf(delayTimeBeats));
+		element.setAttribute("Feedback", String.valueOf(feedback));
+		element.setAttribute("Balance", String.valueOf(balance));
+		return element;
+	}
+
+	@Override
+	public void xmlImport(Element element) throws Exception {
+		super.xmlImport(element);
+		String val = element.getAttribute("DelayTimeBeats");
+		if (val.length() > 0) {
+			setDelayTimeBeats(Double.parseDouble(val));
+		}
+		val = element.getAttribute("Feedback");
+		if (val.length() > 0) {
+			setFeedback(Double.parseDouble(val));
+		}
+		val = element.getAttribute("Balance");
+		if (val.length() > 0) {
+			setBalance(Double.parseDouble(val));
+		}
+	}
+
 
 	// ----------------------------------------- AUTOMATION
 
 	/** the automation object to record a change in delay time */
-	private class DelayTimeAutomation extends AutomationObject {
+	public static class DelayTimeAutomation extends AutomationObjectDouble {
+		public static final String XML_ELEMENT_NAME = "Delay2TimeBeats";
+		private Delay2 target;
 
-		private double aoDelayTimeBeats;
+		/**
+		 * Create an instance with default values, should only be used before
+		 * xml import.
+		 */
+		public DelayTimeAutomation() {
+			super(null, XML_ELEMENT_NAME, 0, 1 / 8.0);
+		}
 
 		/**
 		 * Create a delay time automation object capturing the current playback
 		 * time and the current delay time.
 		 */
-		public DelayTimeAutomation() {
-			super(state, state.getSamplePosition());
-			this.aoDelayTimeBeats = getDelayTimeBeats();
+		public DelayTimeAutomation(Delay2 target) {
+			super(target.state, XML_ELEMENT_NAME,
+					target.state.getSamplePosition(),
+					target.getDelayTimeBeats());
+			this.target = target;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
-		 * @see com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio.AudioTrack)
+		 * @see
+		 * com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio
+		 * .AudioTrack)
 		 */
 		@Override
 		protected void executeImpl(AudioTrack aTrack) {
-			if (state == null) return;
-			setDelayTimeBeats(aoDelayTimeBeats);
-			updateGUIDelayTime();
+			if (target == null) {
+				// try to derive the target
+				if (owner != null && owner.getOwner() != null) {
+					target = (Delay2) owner.getOwner().getEffect(Delay2.class);
+				}
+				if (target == null || target.state == null) return;
+			}
+			target.setDelayTimeBeats(value);
+			target.updateGUIDelayTime();
 		}
 
 		/**
@@ -490,34 +553,50 @@ public class Delay2 extends GUIEffectsBase {
 		 */
 		@Override
 		public String toString() {
-			return super.toString() + ", delay time=" + aoDelayTimeBeats
-					+ " beats";
+			return super.toString() + ", delay time=" + value + " beats";
 		}
 	}
 
 	/** the automation object to record a change in feedback */
-	private class FeedbackAutomation extends AutomationObject {
-		private double aoFeedback;
+	public static class FeedbackAutomation extends AutomationObjectDouble {
+		private static final String XML_ELEMENT_NAME = "Delay2Feedback";
+		private Delay2 target;
+
+		/**
+		 * Create an instance with default values, should only be used before
+		 * xml import.
+		 */
+		public FeedbackAutomation() {
+			super(null, XML_ELEMENT_NAME, 0, 0.5);
+		}
 
 		/**
 		 * Create a feedback automation object capturing the current playback
 		 * time and the current feedback.
 		 */
-		public FeedbackAutomation() {
-			super(state, state.getSamplePosition());
-			this.aoFeedback = getFeedback();
+		public FeedbackAutomation(Delay2 target) {
+			super(target.state, XML_ELEMENT_NAME,
+					target.state.getSamplePosition(), target.getFeedback());
+			this.target = target;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
-		 * @see com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio.AudioTrack)
+		 * @see
+		 * com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio
+		 * .AudioTrack)
 		 */
 		@Override
 		protected void executeImpl(AudioTrack aTrack) {
-			if (state == null) return;
-			setFeedback(aoFeedback);
-			updateGUIFeedback();
+			if (target == null) {
+				// try to derive the target
+				if (owner != null && owner.getOwner() != null) {
+					target = (Delay2) owner.getOwner().getEffect(Delay2.class);
+				}
+				if (target == null || target.state == null) return;
+			}
+			target.setFeedback(value);
+			target.updateGUIFeedback();
 		}
 
 		/**
@@ -526,33 +605,50 @@ public class Delay2 extends GUIEffectsBase {
 		 */
 		@Override
 		public String toString() {
-			return super.toString() + ", feedback=" + aoFeedback;
+			return super.toString() + ", feedback=" + value;
 		}
 	}
 
 	/** the automation object to record a change in balance */
-	private class BalanceAutomation extends AutomationObject {
-		private double aoBalance;
+	public static class BalanceAutomation extends AutomationObjectDouble {
+		private static final String XML_ELEMENT_NAME = "Delay2Balance";
+		private Delay2 target;
+
+		/**
+		 * Create an instance with default values, should only be used before
+		 * xml import.
+		 */
+		public BalanceAutomation() {
+			super(null, XML_ELEMENT_NAME, 0, 0.0);
+		}
 
 		/**
 		 * Create a balance automation object capturing the current playback
 		 * time and the current balance.
 		 */
-		public BalanceAutomation() {
-			super(state, state.getSamplePosition());
-			this.aoBalance = getBalance();
+		public BalanceAutomation(Delay2 target) {
+			super(target.state, XML_ELEMENT_NAME,
+					target.state.getSamplePosition(), target.getBalance());
+			this.target = target;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
-		 * @see com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio.AudioTrack)
+		 * @see
+		 * com.mixblendr.audio.AutomationObject#executeImpl(com.mixblendr.audio
+		 * .AudioTrack)
 		 */
 		@Override
 		protected void executeImpl(AudioTrack aTrack) {
-			if (state == null) return;
-			setBalance(aoBalance);
-			updateGUIBalance();
+			if (target == null) {
+				// try to derive the target
+				if (owner != null && owner.getOwner() != null) {
+					target = (Delay2) owner.getOwner().getEffect(Delay2.class);
+				}
+				if (target == null || target.state == null) return;
+			}
+			target.setBalance(value);
+			target.updateGUIBalance();
 		}
 
 		/**
@@ -561,7 +657,7 @@ public class Delay2 extends GUIEffectsBase {
 		 */
 		@Override
 		public String toString() {
-			return super.toString() + ", balance=" + aoBalance;
+			return super.toString() + ", balance=" + value;
 		}
 	}
 

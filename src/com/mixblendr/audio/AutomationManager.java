@@ -14,6 +14,7 @@ import java.util.HashMap;
 public class AutomationManager {
 
 	static HashMap<Class, AutomationHandler> types = new HashMap<Class, AutomationHandler>();
+	static HashMap<String, Class> xmlNames = new HashMap<String, Class>();
 
 	/** prevent instantiation */
 	private AutomationManager() {
@@ -56,4 +57,30 @@ public class AutomationManager {
 		}
 		return ah;
 	}
+
+	/**
+	 * For a given AutomationObject class, register its XML name.
+	 * 
+	 * @param xmlElementName the tag name used for xml export/import
+	 */
+	public static void registerXML(Class automationClass, String xmlElementName) {
+		if (xmlNames.containsKey(xmlElementName)) {
+			throw new RuntimeException(
+					"internal error: duplicate xml name for automation object");
+		}
+		//Debug.debug("registering '"+xmlElementName+"' to "+automationClass);
+		xmlNames.put(xmlElementName, automationClass);
+	}
+
+	/**
+	 * For a given XML tag name, return the corresponding automation object
+	 * class.
+	 * 
+	 * @param xmlElementName the tag name used for xml export/import
+	 * @return the class or null if this element name is not registered
+	 */
+	public static Class getAutomationClassFromXmlName(String xmlElementName) {
+		return xmlNames.get(xmlElementName);
+	}
+	
 }

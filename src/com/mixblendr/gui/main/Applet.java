@@ -4,6 +4,7 @@
 package com.mixblendr.gui.main;
 
 import javax.swing.JApplet;
+import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
 import com.mixblendr.util.Debug;
@@ -27,7 +28,7 @@ public class Applet extends JApplet {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Method called by browser before display of the applet.
 	 */
@@ -36,38 +37,16 @@ public class Applet extends JApplet {
 		exception = null;
 		try {
 			System.out.println("Start " + Main.NAME + " " + Main.VERSION);
-			Performance.setDefaultUI();
-			Performance.preload();
-            String url = getParameter("URL");
-            String redirectURL = getParameter("REDIRECT_URL");
-            String defaultTempo = getParameter("DEFAULT_TEMPO");
-
-            double  tempo = 96.0;
-            try
-            {
-                if (defaultTempo != null) {
-                    tempo = Double.parseDouble(defaultTempo);
-                }
-            }
-            catch (NumberFormatException e)
-            {
-                tempo = 96.0;
-            }
-
-            main = new Main();
-            main.setDefaultTempo(tempo);
-            main.createGUI();
-			main.createEngine();
-            main.getProgressDialog().setSaveToServerScriptURL(url);
-            main.setRedirectAfterPublishURL(redirectURL);
-            main.setApplet(this);
-
-
-            SwingUtilities.invokeAndWait(new Runnable() {
+			
+			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					Applet.this.setContentPane(main.getMasterPanel());
+					JLabel label = new JLabel("loading, please wait...");
+					label.setHorizontalAlignment(JLabel.CENTER);
+					label.setOpaque(true);
+					Applet.this.setContentPane(label);
 				}
 			});
+
 		} catch (Exception e) {
 			exception = e;
 		}
@@ -79,9 +58,41 @@ public class Applet extends JApplet {
 		if (exception != null) {
 			Debug.displayErrorDialog(this, exception, "at startup");
 		} else {
+			// the Java Plugin 6.0 kills the VM if init() or start() takes more than 30 seconds or so.
+			// therefore, execute all the init stuff (which will cause loading of classes, etc.)
+			// asynchronously
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					main.start();
+					try {
+						Performance.setDefaultUI();
+						Performance.preload();
+						main = new Main();
+
+						String url = getParameter("URL");
+						String redirectURL = getParameter("REDIRECT_URL");
+						String defaultTempo = getParameter("DEFAULT_TEMPO");
+						String loadURL = getParameter("LOAD_DIR_URL");
+						main.createGUI();
+						main.createEngine();
+						main.getProgressDialog().setSaveToServerScriptURL(url);
+						main.getProgressDialog().setLoadFromServerURL(loadURL);
+						main.setRedirectAfterPublishURL(redirectURL);
+						main.setApplet(Applet.this);
+
+						try {
+							if (defaultTempo != null && defaultTempo.length() > 0) {
+								double tempo = Double.parseDouble(defaultTempo);
+								main.setDefaultTempo(tempo);
+							}
+						} catch (NumberFormatException e) {
+						}
+						
+						Applet.this.setContentPane(main.getMasterPanel());
+
+						main.start();
+					} catch (Exception e) {
+						Debug.displayErrorDialogAsync(Applet.this, e, "at startup");
+					}
 				}
 			});
 		}
@@ -90,13 +101,17 @@ public class Applet extends JApplet {
 	/** called by the browser when the user navigates away from this page */
 	@Override
 	public void stop() {
-		main.stop();
+		if (main != null) {
+			main.stop();
+		}
 	}
 
 	/** called by the browser when removing this applet completely */
 	@Override
 	public void destroy() {
-		main.close();
+		if (main != null) {
+			main.close();
+		}
 	}
-	
+
 }

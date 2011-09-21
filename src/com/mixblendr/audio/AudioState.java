@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.tritonus.share.sampled.*;
+import org.w3c.dom.Element;
 
 import com.mixblendr.util.Debug;
+import com.mixblendr.util.XmlPersistent;
 
 /**
  * Sort of a global class to unify some state parameters of the audio engine and
@@ -16,7 +18,7 @@ import com.mixblendr.util.Debug;
  * 
  * @author Florian Bomers
  */
-public class AudioState {
+public class AudioState implements XmlPersistent {
 
 	public static final double TEMPO_MIN = 10;
 	public static final double TEMPO_MAX = 240;
@@ -26,6 +28,9 @@ public class AudioState {
 
 	/** minimum number of beats in the loop. Set to 0 to disable a minimum length */
 	public static final int MIN_LOOP_BEATS = 1;
+
+	/** the XML element for xml export */
+	public final static String EXPORT_XML_ELEMENT = "State";
 
 	private int channels = 2;
 	private float sampleRate = 44100f;
@@ -704,6 +709,70 @@ public class AudioState {
 		 */
 		public void loopChanged(long oldStart, long oldEnd, long newStart,
 				long newEnd);
+	}
+
+	// PERSISTENCE
+	
+	/**
+	 * Create a child of element named EXPORT_XML_ELEMENT and set all State attributes.
+	 * @param element the element to export to
+	 * @see com.mixblendr.util.XmlPersistent#xmlExport(org.w3c.dom.Element)
+	 */
+	public synchronized Element xmlExport(Element element) {
+		if (!element.getTagName().equals(EXPORT_XML_ELEMENT)) {
+			element = (Element) element.appendChild(element.getOwnerDocument().createElement(EXPORT_XML_ELEMENT));
+		}
+		element.setAttribute("ChannelCount", String.valueOf(channels));
+		element.setAttribute("SamplingRate", String.valueOf(sampleRate));
+		element.setAttribute("LoopEnabled", loopEnabled?"yes":"false");
+		element.setAttribute("LoopStart", String.valueOf(loopStart));
+		element.setAttribute("LoopEnd", String.valueOf(loopEnd));
+		element.setAttribute("Tempo", String.valueOf(tempo));
+		element.setAttribute("BeatsPerMeasure", String.valueOf(beatsPerMeasure));
+		element.setAttribute("MasterVolume", String.valueOf(masterVolume));
+		element.setAttribute("TimeDisplayInBeats", timeDisplayInBeats?"yes":"false");
+		
+		return element;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.mixblendr.util.XmlPersistent#xmlImport(org.w3c.dom.Element)
+	 */
+	public void xmlImport(Element element) {
+		assert(element.getTagName().equals(EXPORT_XML_ELEMENT));
+		String val = element.getAttribute("ChannelCount");
+		if (val.length() > 0) {
+			setChannels(Integer.parseInt(val));
+		}
+		val = element.getAttribute("SamplingRate");
+		if (val.length() > 0) {
+			setSampleRate(Float.parseFloat(val));
+		}
+		val = element.getAttribute("LoopEnabled");
+		if (val.length() > 0) {
+			setLoopEnabled(val.charAt(0) == 'y' || val.charAt(0) == 't' || val.charAt(0) == '1');
+		}
+		val = element.getAttribute("LoopStart");
+		String val2 = element.getAttribute("LoopEnd");
+		if (val.length() > 0 && val2.length() > 0) {
+			setLoopSamples(Long.parseLong(val), Long.parseLong(val2));
+		}
+		val = element.getAttribute("Tempo");
+		if (val.length() > 0) {
+			setTempo(Double.parseDouble(val));
+		}
+		val = element.getAttribute("BeatsPerMeasure");
+		if (val.length() > 0) {
+			setBeatsPerMeasure(Integer.parseInt(val));
+		}
+		val = element.getAttribute("MasterVolume");
+		if (val.length() > 0) {
+			setMasterVolume(Double.parseDouble(val));
+		}
+		val = element.getAttribute("TimeDisplayInBeats");
+		if (val.length() > 0) {
+			setTimeDisplayInBeats(val.charAt(0) == 'y' || val.charAt(0) == 't' || val.charAt(0) == '1');
+		}
 	}
 
 }

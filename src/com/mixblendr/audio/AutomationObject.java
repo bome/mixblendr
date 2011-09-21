@@ -3,6 +3,10 @@
  */
 package com.mixblendr.audio;
 
+import org.w3c.dom.Element;
+
+import com.mixblendr.util.XmlPersistent;
+
 /**
  * Base class for time stamped objects that are kept in the playlist of a track
  * for automation purposes.
@@ -11,7 +15,7 @@ package com.mixblendr.audio;
  * 
  * @author Florian Bomers
  */
-public abstract class AutomationObject {
+public abstract class AutomationObject implements XmlPersistent {
 
 	/**
 	 * the start time in samples, when to start playback of this object in the
@@ -105,6 +109,14 @@ public abstract class AutomationObject {
 	 */
 	public final AudioState getState() {
 		return state;
+	}
+	
+	/**
+	 * Set the state. Normally not needed, only used for xmlImport in the playlist.
+	 * @param state the state to set
+	 */
+	void setState(AudioState state) {
+		this.state = state;
 	}
 
 	/**
@@ -214,6 +226,45 @@ public abstract class AutomationObject {
 	 * @param track the audio track on which this automation event occured
 	 */
 	protected abstract void executeImpl(AudioTrack track);
+
+	
+	// PERSISTENCE
+	
+	/**
+	 * subclasses should use this base implementation for creation of the XML
+	 * child element, and for setting the start time.
+	 */
+	protected Element xmlExport(Element element, String elementName) {
+		if (!element.getTagName().equals(elementName)) {
+			element = (Element) element.appendChild(element.getOwnerDocument().createElement(elementName));
+		}
+		element.setAttribute("Time", String.valueOf(startTime));
+		return element;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.mixblendr.util.XmlPersistent#xmlExport(org.w3c.dom.Element)
+	 */
+	public abstract Element xmlExport(Element element);
+
+	/**
+	 * subclasses should use this base implementation for parsing the XML child
+	 * element, and for parsing the start time.
+	 * 
+	 * @return the XML element of the given elementName
+	 */
+	protected Element xmlImport(Element element, String elementName) throws Exception {
+		assert(element.getTagName().equals(elementName));
+		setStartTimeSamples(Long.parseLong(element.getAttribute("Time")));
+		return element;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.mixblendr.util.XmlPersistent#xmlImport(org.w3c.dom.Element)
+	 */
+	public abstract void xmlImport(Element element) throws Exception;
 
 	/**
 	 * @return a string representation of this object (mainly for debugging
